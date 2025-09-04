@@ -1,0 +1,127 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  GO_VERSION: '1.21'
+
+jobs:
+  build-and-release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Get version
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+    - name: Build for all platforms
+      run: |
+        mkdir -p release
+
+        # Build for Linux AMD64
+        GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=${{ steps.version.outputs.VERSION }}" -o release/rtp-monitor-linux-amd64 .
+
+        # Build for Linux ARM64
+        GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=${{ steps.version.outputs.VERSION }}" -o release/rtp-monitor-linux-arm64 .
+
+        # Build for macOS AMD64
+        GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=${{ steps.version.outputs.VERSION }}" -o release/rtp-monitor-darwin-amd64 .
+
+        # Build for macOS ARM64
+        GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=${{ steps.version.outputs.VERSION }}" -o release/rtp-monitor-darwin-arm64 .
+
+        # Build for Windows AMD64
+        GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-s -w -X main.version=${{ steps.version.outputs.VERSION }}" -o release/rtp-monitor-windows-amd64.exe .
+
+    - name: Create archives and checksums
+      run: |
+        cd release
+
+        # Create tar.gz for Unix systems
+        tar -czf rtp-monitor-linux-amd64.tar.gz rtp-monitor-linux-amd64
+        tar -czf rtp-monitor-linux-arm64.tar.gz rtp-monitor-linux-arm64
+        tar -czf rtp-monitor-darwin-amd64.tar.gz rtp-monitor-darwin-amd64
+        tar -czf rtp-monitor-darwin-arm64.tar.gz rtp-monitor-darwin-arm64
+
+        # Create zip for Windows
+        zip rtp-monitor-windows-amd64.zip rtp-monitor-windows-amd64.exe
+
+        # Remove individual binaries
+        rm rtp-monitor-linux-amd64 rtp-monitor-linux-arm64 rtp-monitor-darwin-amd64 rtp-monitor-darwin-arm64 rtp-monitor-windows-amd64.exe
+
+        # Generate checksums
+        sha256sum *.tar.gz *.zip > checksums.txt
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          release/*.tar.gz
+          release/*.zip
+          release/checksums.txt
+        generate_release_notes: true
+        draft: false
+        prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+        body: |
+          ## Installation
+
+          ### Linux (AMD64)
+          ```bash
+          wget https://github.com/holoplot/rtp-monitor/releases/download/${{ steps.version.outputs.VERSION }}/rtp-monitor-linux-amd64.tar.gz
+          tar -xzf rtp-monitor-linux-amd64.tar.gz
+          sudo mv rtp-monitor-linux-amd64 /usr/local/bin/rtp-monitor
+          ```
+
+          ### Linux (ARM64)
+          ```bash
+          wget https://github.com/holoplot/rtp-monitor/releases/download/${{ steps.version.outputs.VERSION }}/rtp-monitor-linux-arm64.tar.gz
+          tar -xzf rtp-monitor-linux-arm64.tar.gz
+          sudo mv rtp-monitor-linux-arm64 /usr/local/bin/rtp-monitor
+          ```
+
+          ### macOS (Intel)
+          ```bash
+          wget https://github.com/holoplot/rtp-monitor/releases/download/${{ steps.version.outputs.VERSION }}/rtp-monitor-darwin-amd64.tar.gz
+          tar -xzf rtp-monitor-darwin-amd64.tar.gz
+          sudo mv rtp-monitor-darwin-amd64 /usr/local/bin/rtp-monitor
+          ```
+
+          ### macOS (Apple Silicon)
+          ```bash
+          wget https://github.com/holoplot/rtp-monitor/releases/download/${{ steps.version.outputs.VERSION }}/rtp-monitor-darwin-arm64.tar.gz
+          tar -xzf rtp-monitor-darwin-arm64.tar.gz
+          sudo mv rtp-monitor-darwin-arm64 /usr/local/bin/rtp-monitor
+          ```
+
+          ### Windows
+          Download the `rtp-monitor-windows-amd64.zip` file and extract it to a directory in your PATH.
+
+          ### Verify checksums
+          ```bash
+          wget https://github.com/holoplot/rtp-monitor/releases/download/${{ steps.version.outputs.VERSION }}/checksums.txt
+          sha256sum -c checksums.txt
+          ```
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
