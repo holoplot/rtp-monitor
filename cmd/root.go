@@ -99,11 +99,11 @@ func run(cmd *cobra.Command, args []string) error {
 	}
 
 	if err := manager.MonitorSAP(); err != nil {
-		return fmt.Errorf("error monitoring SAP: %w", err)
+		slog.Error("error monitoring SAP", "error", err)
 	}
 
 	if err := manager.MonitorMDns(); err != nil {
-		return fmt.Errorf("error monitoring mDNS: %w", err)
+		slog.Error("error monitoring mDNS", "error", err)
 	}
 
 	// Track PTP Transitters
