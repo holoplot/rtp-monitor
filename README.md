@@ -79,11 +79,11 @@ Flags:
 - `Page Down`: Move down one page
 
 ### Actions
-- 'c': Copy selected stream's SDP to clipboard
+- `c`: Copy selected stream's SDP to clipboard
 - `d`: Show detailed information for selected stream
 - `v`: Show live VU meters for selected audio stream
 - `r`: Show RTCP logs for selected stream
-- 'R': Record selected stream to a WAV file
+- `R`: Record selected stream to a WAV file
 - `q`, `Ctrl+C`, or `Esc`: Quit application
 
 ### Modal Details
