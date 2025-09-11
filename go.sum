@@ -40,6 +40,8 @@ github.com/holoplot/go-multicast v0.0.0-20250910144138-8c0d7dca4339 h1:apPuUL1HZ
 github.com/holoplot/go-multicast v0.0.0-20250910144138-8c0d7dca4339/go.mod h1:paE/q0sICr82CN1IQ96b5vJJ41IGgyH3/7YG+WogIi0=
 github.com/holoplot/go-sap v0.0.0-20250620083054-0819a61bd24e h1:EYrZJeI+1dQq9BspmrnWHT3FGZGyMxx3zXvxNYJJjl0=
 github.com/holoplot/go-sap v0.0.0-20250620083054-0819a61bd24e/go.mod h1:hAZlab9mkgSheS5GsMcXDqLK+DCYtEyd2/WA0LhaCK4=
+github.com/holoplot/ravenna-fpga-drivers/go v0.0.0-20250911091028-b191ea15ded6 h1:BIp43Y2nLo5as2bZeP4jVipvuNmffUxsEGjqp3PmfKw=
+github.com/holoplot/ravenna-fpga-drivers/go v0.0.0-20250911091028-b191ea15ded6/go.mod h1:9SEENxbjueBhzf+rCRlJtBKZoSrzUbqxcWqY2tfcII4=
 github.com/holoplot/sdp v0.18.3-0.20220210000336-2bb0da759e83 h1:PYj2zODu5Nvj5mIHLczmbzlVnnbfQJkRdc4INz0tacU=
 github.com/holoplot/sdp v0.18.3-0.20220210000336-2bb0da759e83/go.mod h1:5aC0nTbTsGhASaipI5Gl4a2HQXf56PA0VDbblg+65rI=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=

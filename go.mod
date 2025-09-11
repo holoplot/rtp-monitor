@@ -14,6 +14,7 @@ require (
 	github.com/holoplot/go-avahi v1.0.1
 	github.com/holoplot/go-multicast v0.0.0-20250910144138-8c0d7dca4339
 	github.com/holoplot/go-sap v0.0.0-20250620083054-0819a61bd24e
+	github.com/holoplot/ravenna-fpga-drivers/go v0.0.0-20250911091028-b191ea15ded6
 	github.com/holoplot/sdp v0.18.3-0.20220210000336-2bb0da759e83
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/pion/rtcp v1.2.15

@@ -140,7 +140,7 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "end":
 			m.modal.ScrollToBottom()
 			return m, nil
-		case "c", "d", "v", "r", "R", "s":
+		case "c", "d", "f", "v", "r", "R", "s":
 			// Allow modal switching - fall through to main keypress handling
 		default:
 			// For any other keys when modal is open, consume the input
@@ -180,6 +180,19 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}
 			detailsProvider := NewDetailsModalContent(selected, m.ptpMonitor)
 			m.modal.Show(detailsProvider, m.width, m.height)
+			return m, m.modalTickCmd() // Start updates immediately
+		}
+		return m, nil
+
+	case "f":
+		// Show FPGA RX modal for selected stream
+		selected := m.table.GetSelected()
+		if selected != nil {
+			if m.modal.IsVisible() {
+				m.modal.Hide()
+			}
+			fpgaRxProvider := NewFpgaRxModalContent(selected)
+			m.modal.Show(fpgaRxProvider, m.width, m.height)
 			return m, m.modalTickCmd() // Start updates immediately
 		}
 		return m, nil
@@ -369,7 +382,7 @@ func (m *Model) renderFooter() string {
 		selectedInfo = "No stream selected"
 	}
 
-	help := "↑/↓: Navigate │ c: Copy SDP to clipboard │ d: Details │ v: VU Meters │ r: RTCP | R: Record wav │ s: SDP │ q: Quit"
+	help := "↑/↓: Navigate │ c: Copy to clipboard │ d: Details │ f: FPGA RX │ r: RTCP | R: Record wav │ s: SDP │ v: VU Meters │q: Quit"
 
 	selectedStyle := lipgloss.NewStyle().
 		Foreground(theme.Colors.Highlight).
