@@ -43,8 +43,8 @@ func (d *RTCPModalContent) rtpReceiverCallback(sourceIndex int, src net.Addr, pk
 
 	switch p := pkt.(type) {
 	case *rtcp.SenderReport:
-		s := fmt.Sprintf("SenderReport from %x, NTPTime %d, RTPTime %d, PacketCount %d, OctetCount %d",
-			p.SSRC, p.NTPTime, p.RTPTime, p.PacketCount, p.OctetCount)
+		s := fmt.Sprintf("SenderReport from %x, NTPTime %d.%d, RTPTime %d, PacketCount %d, OctetCount %d",
+			p.SSRC, p.NTPTime>>32, p.NTPTime&0xFFFFFFFF, p.RTPTime, p.PacketCount, p.OctetCount)
 		lines = append(lines, s)
 	case *rtcp.ReceiverReport:
 		if p.SSRC != 0 {
