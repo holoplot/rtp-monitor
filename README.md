@@ -11,6 +11,7 @@ A Go application for monitoring and tracking the availability of Real-time Trans
 - **Real-time Updates**: Periodic refresh of stream status and statistics
 - **WAV Recording**: Record selected stream to a WAV file
 - **PTP Monitor**: If started with sufficient privileges, PTP time transmitters will be monitored and their equivalent RTP timestamp will be displayed in the stream details view.
+- **FPGA RX Monitor**: Support for Ravenna FPGA stream receiver (only available on Linux with special hardware)
 
 ## Installation
 
@@ -81,9 +82,10 @@ Flags:
 ### Actions
 - `c`: Copy selected stream's SDP to clipboard
 - `d`: Show detailed information for selected stream
-- `v`: Show live VU meters for selected audio stream
+- `f`: Show FPGA RX modal for selected stream (Linux only)
 - `r`: Show RTCP logs for selected stream
 - `R`: Record selected stream to a WAV file
+- `v`: Show live VU meters for selected audio stream
 - `q`, `Ctrl+C`, or `Esc`: Quit application
 
 ### Modal Details

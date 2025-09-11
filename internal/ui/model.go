@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 	"time"
 
@@ -114,6 +115,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func isLinux() bool {
+	return runtime.GOOS == "linux"
+}
+
 // handleKeypress handles keyboard input
 func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Handle modal input first if any modal is visible
@@ -189,15 +194,17 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case "f":
-		// Show FPGA RX modal for selected stream
-		selected := m.table.GetSelected()
-		if selected != nil {
-			if m.modal.IsVisible() {
-				m.modal.Hide()
+		if isLinux() {
+			// Show FPGA RX modal for selected stream
+			selected := m.table.GetSelected()
+			if selected != nil {
+				if m.modal.IsVisible() {
+					m.modal.Hide()
+				}
+				fpgaRxProvider := NewFpgaRxModalContent(selected)
+				m.modal.Show(fpgaRxProvider, m.width, m.height)
+				return m, m.modalTickCmd() // Start updates immediately
 			}
-			fpgaRxProvider := NewFpgaRxModalContent(selected)
-			m.modal.Show(fpgaRxProvider, m.width, m.height)
-			return m, m.modalTickCmd() // Start updates immediately
 		}
 		return m, nil
 
@@ -386,7 +393,23 @@ func (m *Model) renderFooter() string {
 		selectedInfo = "No stream selected"
 	}
 
-	help := "↑/↓: Navigate │ c: Copy to clipboard │ d: Details │ f: FPGA RX │ r: RTCP | R: Record wav │ s: SDP │ v: VU Meters │q: Quit"
+	help := []string{
+		"↑/↓: Navigate",
+		"c: Copy to clipboard",
+		"d: Details",
+	}
+
+	if isLinux() {
+		help = append(help, "f: FPGA RX")
+	}
+
+	help = append(help, []string{
+		"r: RTCP",
+		"R: Record wav",
+		"s: SDP",
+		"v: VU Meters",
+		"q: Quit",
+	}...)
 
 	selectedStyle := lipgloss.NewStyle().
 		Foreground(theme.Colors.Highlight).
@@ -394,7 +417,7 @@ func (m *Model) renderFooter() string {
 
 	helpStyle := lipgloss.NewStyle().
 		Foreground(theme.Colors.Secondary).
-		Render(help)
+		Render(strings.Join(help, " │ "))
 
 	return lipgloss.JoinVertical(lipgloss.Left,
 		selectedStyle,
