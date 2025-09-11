@@ -165,7 +165,11 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "c":
 		// Show controls modal for selected stream
 		selected := m.table.GetSelected()
-		if selected != nil {
+
+		if m.modal.IsVisible() {
+			s := strings.Join(m.modal.provider.Content(), "\n")
+			clipboard.WriteString(s)
+		} else if selected != nil {
 			clipboard.Write(selected.SDP)
 		}
 
