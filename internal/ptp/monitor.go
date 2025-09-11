@@ -2,7 +2,9 @@ package ptp
 
 import (
 	"fmt"
+	"math/big"
 	"net"
+	"sort"
 	"sync"
 	"time"
 
@@ -51,10 +53,16 @@ func (ts Timestamp) totalNanoSeconds() uint64 {
 }
 
 func (ts Timestamp) InSamples(sampleRate uint32) uint32 {
-	totalNs := ts.totalNanoSeconds()
-	samples := totalNs * uint64(sampleRate) / 1_000_000_000
+	// Use math.Big to prevent overflow during multiplication
+	totalNs := new(big.Int).SetUint64(ts.totalNanoSeconds())
+	sampleRateBig := new(big.Int).SetUint64(uint64(sampleRate))
+	billion := new(big.Int).SetUint64(1_000_000_000)
 
-	return uint32(samples)
+	// Calculate samples = totalNs * sampleRate / 1_000_000_000
+	samples := new(big.Int).Mul(totalNs, sampleRateBig)
+	samples.Div(samples, billion)
+
+	return uint32(samples.Uint64())
 }
 
 type Transmitter struct {
@@ -121,8 +129,18 @@ func (m *Monitor) ForEachTransmitter(fn func(ClockIdentity, *Transmitter)) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	for id, transmitter := range m.transmitters {
-		fn(id, transmitter)
+	var clockIDs []ClockIdentity
+	for id := range m.transmitters {
+		clockIDs = append(clockIDs, id)
+	}
+
+	sort.Slice(clockIDs, func(i, j int) bool {
+		return clockIDs[i].String() < clockIDs[j].String()
+	})
+
+	// Iterate over sorted clock identities
+	for _, id := range clockIDs {
+		fn(id, m.transmitters[id])
 	}
 }
 
