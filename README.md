@@ -15,7 +15,7 @@ A Go application for monitoring and tracking the availability of Real-time Trans
 - **Real-time Updates**: Periodic refresh of stream status and statistics
 - **WAV Recording**: Record selected stream to a WAV file
 - **PTP Monitor**: If started with sufficient privileges, PTP time transmitters will be monitored and their equivalent RTP timestamp will be displayed in the stream details view.
-- **FPGA RX Monitor**: Support for Ravenna FPGA stream receiver (only available on Linux with special hardware)
+- **FPGA RX streaming**: Support for Ravenna FPGA stream receiver (only available on Linux with special hardware)
 
 ## Demo
 
@@ -42,7 +42,7 @@ The project includes a Makefile for easy development:
 
 ```bash
 make build      # Build the application
-make run        # Build and run the application  
+make run        # Build and run the application
 make clean      # Clean build artifacts
 make test       # Run tests
 make version    # Show version information
