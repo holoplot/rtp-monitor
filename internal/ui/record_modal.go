@@ -31,23 +31,29 @@ type RecordModalContent struct {
 	stream   *stream.Stream
 	receiver *stream.RTPReceiver
 
-	startTime        time.Time
-	lastRecordedTime time.Time
+	startTime time.Time
 
-	wavFileFolder string
-	ch            chan []stream.SampleFrame
 	cancelFunc    context.CancelFunc
-	file          *os.File
-	wavEncoder    *wav.Encoder
 	err           error
-	bytesCounter  uint64
+	wavFileFolder string
+
+	recordings []*recording
+}
+
+type recording struct {
+	ch               chan []stream.SampleFrame
+	file             *os.File
+	wavEncoder       *wav.Encoder
+	bytesCounter     uint64
+	lastRecordedTime time.Time
+	err              error
 }
 
 // NewRecordModalContent creates a new VU modal content provider
 func NewRecordModalContent(s *stream.Stream, wavFileFolder string) *RecordModalContent {
 	v := &RecordModalContent{
 		stream:        s,
-		ch:            make(chan []stream.SampleFrame, 1000),
+		recordings:    make([]*recording, 0),
 		wavFileFolder: wavFileFolder,
 	}
 
@@ -81,7 +87,11 @@ func (r *RecordModalContent) rtpReceiverCallback(sourceIndex int, _ net.Addr, pa
 		return
 	}
 
-	r.ch <- sampleFrames
+	if sourceIndex >= len(r.recordings) {
+		return
+	}
+
+	r.recordings[sourceIndex].ch <- sampleFrames
 }
 
 // Init initializes the content provider with dimensions
@@ -100,60 +110,67 @@ func (r *RecordModalContent) Init(width, height int) {
 	r.contentWidth -= 4 // Account for modal padding
 
 	r.startTime = time.Now()
-	r.lastRecordedTime = r.startTime
-
-	re := regexp.MustCompile(`[^a-zA-Z0-9]`)
-	streamName := re.ReplaceAllString(r.stream.Description.Name, "_")
-	fileName := fmt.Sprintf("%s_%s.wav", streamName, r.startTime.Format(time.RFC3339))
-	fileName = path.Join(r.wavFileFolder, fileName)
-
-	outFile, err := os.Create(fileName)
-	if err != nil {
-		r.err = err
-
-		return
-	}
-
-	r.file = outFile
-
-	r.wavEncoder = wav.NewEncoder(outFile, int(r.stream.Description.SampleRate), 32,
-		int(r.stream.Description.ChannelCount), 1)
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	r.cancelFunc = cancelFunc
 
-	go func() {
-		defer cancelFunc()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case frames := <-r.ch:
-				buf := &audio.IntBuffer{
-					Format: &audio.Format{
-						NumChannels: int(r.stream.Description.ChannelCount),
-						SampleRate:  int(r.stream.Description.SampleRate),
-					},
-					Data:           make([]int, 0),
-					SourceBitDepth: 32,
-				}
-
-				for _, frame := range frames {
-					for _, sample := range frame {
-						buf.Data = append(buf.Data, int(sample))
-					}
-				}
-
-				if err := r.wavEncoder.Write(buf); err != nil {
-					r.err = fmt.Errorf("failed to write to WAV file: %w", err)
-					return
-				}
-
-				r.bytesCounter += uint64(len(buf.Data) * 4)
-				r.lastRecordedTime = time.Now()
-			}
+	for i := range r.stream.Description.Sources {
+		rec := &recording{
+			ch:               make(chan []stream.SampleFrame, 1000),
+			lastRecordedTime: r.startTime,
 		}
-	}()
+
+		re := regexp.MustCompile(`[^a-zA-Z0-9]`)
+		streamName := re.ReplaceAllString(r.stream.Description.Name, "_")
+		fileName := fmt.Sprintf("%s_%s-%d.wav", streamName, r.startTime.Format(time.RFC3339), i)
+		fileName = path.Join(r.wavFileFolder, fileName)
+
+		outFile, err := os.Create(fileName)
+		if err != nil {
+			r.err = err
+
+			return
+		}
+
+		rec.file = outFile
+
+		rec.wavEncoder = wav.NewEncoder(outFile, int(r.stream.Description.SampleRate), 32,
+			int(r.stream.Description.ChannelCount), 1)
+
+		go func() {
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case frames := <-rec.ch:
+					buf := &audio.IntBuffer{
+						Format: &audio.Format{
+							NumChannels: int(r.stream.Description.ChannelCount),
+							SampleRate:  int(r.stream.Description.SampleRate),
+						},
+						Data:           make([]int, 0),
+						SourceBitDepth: 32,
+					}
+
+					for _, frame := range frames {
+						for _, sample := range frame {
+							buf.Data = append(buf.Data, int(sample))
+						}
+					}
+
+					if err := rec.wavEncoder.Write(buf); err != nil {
+						rec.err = fmt.Errorf("failed to write to WAV file: %w", err)
+						return
+					}
+
+					rec.bytesCounter += uint64(len(buf.Data) * 4)
+					rec.lastRecordedTime = time.Now()
+				}
+			}
+		}()
+
+		r.recordings = append(r.recordings, rec)
+	}
 
 	if receiver, err := r.stream.NewRTPReceiver(r.rtpReceiverCallback); err == nil {
 		r.receiver = receiver
@@ -170,12 +187,14 @@ func (r *RecordModalContent) Close() {
 		r.receiver.Close()
 	}
 
-	if r.wavEncoder != nil {
-		r.wavEncoder.Close()
-	}
+	for _, rec := range r.recordings {
+		if rec.wavEncoder != nil {
+			rec.wavEncoder.Close()
+		}
 
-	if r.file != nil {
-		r.file.Close()
+		if rec.file != nil {
+			rec.file.Close()
+		}
 	}
 }
 
@@ -183,27 +202,30 @@ func (r *RecordModalContent) Close() {
 func (r *RecordModalContent) Content() []string {
 	l := newLineBuffer(lipgloss.NewStyle())
 
-	dur := r.lastRecordedTime.Sub(r.startTime)
-
 	l.h("RECORDING ...")
 	l.p("")
 
-	if r.err != nil {
-		l.p("Error: %s", r.err)
-	} else {
-		l.p("Channels:     %d", r.stream.Description.ChannelCount)
-		l.p("Sample Rate:  %d", r.stream.Description.SampleRate)
-		l.p("File:         %s", r.file.Name())
-		l.p("")
-		l.p("Duration:     %02d:%02d.%03d",
-			int(dur.Minutes()),
-			int(dur.Seconds())%60,
-			int(dur.Milliseconds())%1000)
+	for i, rec := range r.recordings {
+		l.p("Recording %d:", i+1)
 
-		l.p("Record bytes: %s", units.HumanSize(float64(r.bytesCounter)))
-		l.p("")
+		if r.err != nil {
+			l.p("Error: %s", r.err)
+		} else {
+			dur := rec.lastRecordedTime.Sub(r.startTime)
+			l.p("  ├─Channels:       %d", r.stream.Description.ChannelCount)
+			l.p("  ├─Sample Rate:    %d", r.stream.Description.SampleRate)
+			l.p("  ├─File:           %s", rec.file.Name())
+			l.p("  ├─Duration:       %02d:%02d.%03d",
+				int(dur.Minutes()),
+				int(dur.Seconds())%60,
+				int(dur.Milliseconds())%1000)
 
-		l.p("Hit ESC to stop")
+			l.p("  └─Recorded bytes: %s", units.HumanSize(float64(rec.bytesCounter)))
+			l.p("")
+
+			l.p("Hit ESC to stop")
+		}
+
 	}
 
 	return l.lines()
@@ -211,7 +233,7 @@ func (r *RecordModalContent) Content() []string {
 
 // Title returns the modal title
 func (r *RecordModalContent) Title() string {
-	return "RECORD WAV FILE"
+	return "RECORD WAV FILES"
 }
 
 // UpdateInterval returns how often the modal content should be updated
