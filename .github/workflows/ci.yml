@@ -8,7 +8,7 @@ on:
     branches: [main]
 
 env:
-  GO_VERSION: "1.21"
+  GO_VERSION: "1.24"
 
 jobs:
   test:
@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -32,10 +34,10 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Download dependencies
-        run: go mod download
+        run: make deps
 
       - name: Run tests
-        run: go test -v -race -coverprofile=coverage.out ./...
+        run: make test-coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -44,16 +46,11 @@ jobs:
           flags: unittests
           name: codecov-umbrella
 
-      - name: Run go vet
-        run: go vet ./...
+      - name: Vet code
+        run: make vet
 
-      - name: Run go fmt check
-        run: |
-          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
-            echo "The following files are not formatted:"
-            gofmt -s -l .
-            exit 1
-          fi
+      - name: Format check
+        run: make fmt
 
   build:
     name: Build
@@ -62,29 +59,21 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            goos: linux
-            goarch: amd64
-            binary_suffix: ""
+            make_target: "build-linux-amd64"
           - os: ubuntu-latest
-            goos: linux
-            goarch: arm64
-            binary_suffix: ""
+            make_target: "build-linux-arm64"
           - os: macos-latest
-            goos: darwin
-            goarch: amd64
-            binary_suffix: ""
+            make_target: "build-darwin-amd64"
           - os: macos-latest
-            goos: darwin
-            goarch: arm64
-            binary_suffix: ""
+            make_target: "build-darwin-arm64"
           - os: windows-latest
-            goos: windows
-            goarch: amd64
-            binary_suffix: ".exe"
+            make_target: "build-windows-amd64"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -100,31 +89,23 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Download dependencies
-        run: go mod download
-
-      - name: Set build variables
-        shell: bash
-        run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          else
-            echo "VERSION=dev-${GITHUB_SHA::8}" >> $GITHUB_ENV
-          fi
+        run: make deps
 
       - name: Build binary
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: 0
+        run: make ${{ matrix.make_target }}
+
+      - name: Test version information
+        if: matrix.os == 'ubuntu-latest' && matrix.make_target == 'build-linux-amd64'
         run: |
-          mkdir -p bin
-          go build -ldflags "-s -w -X main.version=${{ env.VERSION }}" -o bin/rtp-monitor-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.binary_suffix }} .
+          make version
+          ./bin/rtp-monitor version
+          ./bin/rtp-monitor --version
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rtp-monitor-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: bin/rtp-monitor-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.binary_suffix }}
+          name: ${{ matrix.make_target }}
+          path: bin/*
           retention-days: 30
 
   release:
@@ -135,31 +116,29 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
         with:
-          path: ./artifacts
+          fetch-depth: 0
 
-      - name: Prepare release assets
-        run: |
-          mkdir -p release
-          find ./artifacts -type f -name 'rtp-monitor-*' -exec cp {} release/ \;
-          cd release
-          for file in rtp-monitor-*; do
-            if [[ "$file" == *.exe ]]; then
-              zip "${file%.*}.zip" "$file"
-              rm "$file"
-            else
-              tar -czf "$file.tar.gz" "$file"
-              rm "$file"
-            fi
-          done
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Build release
+        run: make release
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: release/*
+          files: bin/release/*
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}

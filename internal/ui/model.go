@@ -12,6 +12,7 @@ import (
 	"github.com/holoplot/rtp-monitor/internal/ptp"
 	"github.com/holoplot/rtp-monitor/internal/stream"
 	"github.com/holoplot/rtp-monitor/internal/theme"
+	"github.com/holoplot/rtp-monitor/internal/version"
 	overlay "github.com/rmhubbert/bubbletea-overlay"
 )
 
@@ -357,7 +358,7 @@ func (m *Model) renderHeader() string {
 	title := lipgloss.NewStyle().
 		Foreground(theme.Colors.Primary).
 		Bold(true).
-		Render("RTP Stream Monitor")
+		Render(fmt.Sprintf("RTP Stream Monitor v%s", version.GetShortVersion()))
 
 	streamCount := fmt.Sprintf("Streams: %d", len(m.table.streams))
 	lastUpdate := fmt.Sprintf("Last Update: %s", m.lastUpdate.Format("15:04:05"))

@@ -42,9 +42,32 @@ The project includes a Makefile for easy development:
 
 ```bash
 make build      # Build the application
-make run        # Build and run the application
+make run        # Build and run the application  
 make clean      # Clean build artifacts
 make test       # Run tests
+make version    # Show version information
+make release    # Build for multiple platforms
+```
+
+### Version Information
+
+The application uses `git describe` to automatically determine version information:
+
+- **On a git tag**: `v1.0.0`
+- **After a tag**: `v1.0.0-5-gabcdef0` (5 commits after v1.0.0)
+- **With changes**: `v1.0.0-5-gabcdef0-dirty`
+- **No tags**: `abcdef0` (commit hash only)
+
+```bash
+# Check embedded version info
+./rtp-monitor version
+# Output: v1.0.0-2-gabcdef0 (commit: abcdef0, built: 2025-09-11 14:30:00 UTC, go: go1.24.6)
+
+# Build with custom version (optional)
+make build VERSION=v2.0.0-custom
+
+# View build variables
+make version
 ```
 
 ## Usage

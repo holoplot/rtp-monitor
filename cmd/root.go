@@ -10,6 +10,7 @@ import (
 	"github.com/holoplot/rtp-monitor/internal/ptp"
 	"github.com/holoplot/rtp-monitor/internal/stream"
 	"github.com/holoplot/rtp-monitor/internal/ui"
+	"github.com/holoplot/rtp-monitor/internal/version"
 	"github.com/spf13/cobra"
 )
 
@@ -26,8 +27,17 @@ var rootCmd = &cobra.Command{
 streams in your network. It can discover streams via mDNS, SAP, or manual configuration.
 
 The application provides a terminal-based user interface for interactive monitoring of RTP streams.`,
-	Version: "0.1.0",
+	Version: version.GetVersion(),
 	RunE:    run,
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Show version information",
+	Long:  "Display detailed version information including build date, git commit, and Go version.",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(version.GetVersion())
+	},
 }
 
 func Execute() {
@@ -38,6 +48,7 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.AddCommand(versionCmd)
 	rootCmd.Flags().StringArrayVar(&interfaceNames, "interface", []string{}, "Network interface to use (can be used multiple times)")
 	rootCmd.Flags().StringArrayVar(&sdpFiles, "sdp", []string{}, "SDP file to parse (can be used multiple times)")
 	rootCmd.Flags().StringVar(&wavFileFolder, "wav", "", "Folder to save WAV files")
