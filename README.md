@@ -1,3 +1,7 @@
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Go](https://img.shields.io/badge/Go-1.21-blue)
+![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-blue)
+
 # RTP Stream Monitor
 
 A Go application for monitoring and tracking the availability of Real-time Transport Protocol (RTP) streams in your network. The application discovers and displays stream information by subscribing to the actual stream data.
@@ -12,6 +16,10 @@ A Go application for monitoring and tracking the availability of Real-time Trans
 - **WAV Recording**: Record selected stream to a WAV file
 - **PTP Monitor**: If started with sufficient privileges, PTP time transmitters will be monitored and their equivalent RTP timestamp will be displayed in the stream details view.
 - **FPGA RX Monitor**: Support for Ravenna FPGA stream receiver (only available on Linux with special hardware)
+
+## Demo
+
+![Demo](demo.gif)
 
 ## Installation
 
