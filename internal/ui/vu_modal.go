@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"log/slog"
 	"math"
 	"net"
 	"strconv"
@@ -30,6 +29,8 @@ type VUModalContent struct {
 
 	stream   *stream.Stream
 	receiver *stream.RTPReceiver
+
+	err error
 
 	sourceMeters []*sourceMeters
 }
@@ -145,7 +146,7 @@ func (v *VUModalContent) Init(width, height int) {
 	if receiver, err := v.stream.NewRTPReceiver(v.rtpReceiverCallback); err == nil {
 		v.receiver = receiver
 	} else {
-		slog.Error("Failed to create receiver", "error", err)
+		v.err = err
 	}
 }
 
@@ -216,6 +217,12 @@ func (v *VUModalContent) Content() []string {
 
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
+
+	if v.err != nil {
+		lines = append(lines, fmt.Sprintf("Error creating stream receiver: %v", v.err))
+
+		return lines
+	}
 
 	for i, source := range v.stream.Description.Sources {
 		ip := fmt.Sprintf("%s:%d", source.DestinationAddress, source.DestinationPort)

@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"log/slog"
 	"net"
 	"strings"
 	"sync"
@@ -20,6 +19,7 @@ type RTCPModalContent struct {
 	stream   *stream.Stream
 	receiver *stream.RTCPReceiver
 
+	err        error
 	lastUpdate time.Time
 	log        []string
 
@@ -93,7 +93,7 @@ func (d *RTCPModalContent) Init(width, height int) {
 	if receiver, err := d.stream.NewRTCPReceiver(d.rtpReceiverCallback); err == nil {
 		d.receiver = receiver
 	} else {
-		slog.Error("Failed to create receiver", "error", err)
+		d.err = err
 	}
 
 	d.height = height
@@ -111,6 +111,10 @@ func (d *RTCPModalContent) Content() []string {
 
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
+
+	if d.err != nil {
+		lines = append(lines, fmt.Sprintf("Error creating stream receiver: %v", d.err))
+	}
 
 	lines = append(lines, d.log...)
 

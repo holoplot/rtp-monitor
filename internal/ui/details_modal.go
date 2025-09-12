@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"log/slog"
 	"net"
 	"strings"
 	"sync"
@@ -25,6 +24,7 @@ type DetailsModalContent struct {
 	lastUpdate       time.Time
 	sourceStatistics []*sourceStatistics
 
+	err          error
 	contentWidth int
 	headerStyle  lipgloss.Style
 }
@@ -90,7 +90,7 @@ func (d *DetailsModalContent) Init(width, height int) {
 	if receiver, err := d.stream.NewRTPReceiver(d.rtpReceiverCallback); err == nil {
 		d.receiver = receiver
 	} else {
-		slog.Error("Failed to create receiver", "error", err)
+		d.err = err
 	}
 
 	d.contentWidth = width
@@ -146,6 +146,12 @@ func (d *DetailsModalContent) Content() []string {
 
 	l.p("STREAM STATISTICS")
 	l.p("")
+
+	if d.err != nil {
+		l.p("Error creating stream receiver: %v", d.err)
+
+		return l.lines()
+	}
 
 	dur := time.Since(d.lastUpdate)
 
