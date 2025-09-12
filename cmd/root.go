@@ -80,10 +80,45 @@ func run(cmd *cobra.Command, args []string) error {
 
 	// Filter to multicast-capable interfaces
 	var multicastIfis []*net.Interface
-	for i := range ifis {
-		if ifis[i].Flags&net.FlagMulticast != 0 && ifis[i].Flags&net.FlagUp != 0 {
-			multicastIfis = append(multicastIfis, &ifis[i])
+	for _, ifi := range ifis {
+		if ifi.Flags&net.FlagUp == 0 {
+			continue
 		}
+
+		if ifi.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+
+		if ifi.Flags&net.FlagMulticast == 0 {
+			continue
+		}
+
+		hasIPv4Addr := func(ifi *net.Interface) bool {
+			addrs, err := ifi.Addrs()
+			if err != nil {
+				slog.Error("failed to get network interface addresses", "interface", ifi.Name, "error", err)
+
+				return false
+			}
+
+			for _, addr := range addrs {
+				if ip, _, err := net.ParseCIDR(addr.String()); err == nil && ip.To4() != nil {
+					return true
+				}
+			}
+
+			return false
+		}
+
+		if !hasIPv4Addr(&ifi) {
+			continue
+		}
+
+		if addrs, err := ifi.Addrs(); err != nil || len(addrs) == 0 {
+			continue
+		}
+
+		multicastIfis = append(multicastIfis, &ifi)
 	}
 
 	if len(multicastIfis) == 0 {
