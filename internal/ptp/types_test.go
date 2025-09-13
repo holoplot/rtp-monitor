@@ -224,7 +224,7 @@ func TestTimestampString(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ts := Timestamp{PTP: tt.ptpBytes}
-			got := ts.String()
+			got := ts.AsUTC()
 
 			for _, contain := range tt.contains {
 				if !strings.Contains(got, contain) {
@@ -248,7 +248,7 @@ func TestTimestampStringWithLargeValue(t *testing.T) {
 	}
 
 	// Should not panic and should return some reasonable string
-	result := ts.String()
+	result := ts.AsUTC()
 
 	if !strings.Contains(result, "out of range") {
 		t.Errorf("String() = %q, should contain 'out of range'", result)

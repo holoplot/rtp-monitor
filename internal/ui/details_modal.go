@@ -185,8 +185,9 @@ func (d *DetailsModalContent) Content() []string {
 			ptpSamples := t.LastTimestamp.InSamples(d.stream.Description.SampleRate)
 
 			l.p("PTP Transmitter %s (domain %d):", ci, t.Domain)
-			l.p("  ├─ PTP timestamp: %s", t.LastTimestamp)
-			l.p("  └─ RTP samples:   %d", ptpSamples)
+			l.p("  ├─ PTP timestamp (UTC): %s", t.LastTimestamp.AsUTC())
+			l.p("  ├─ PTP timestamp (TAI): %s", t.LastTimestamp.AsTAI())
+			l.p("  └─ RTP samples:         %d", ptpSamples)
 			l.p("")
 		})
 	} else {

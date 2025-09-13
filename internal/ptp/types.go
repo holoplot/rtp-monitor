@@ -1,6 +1,7 @@
 package ptp
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 	"time"
@@ -77,16 +78,38 @@ func (ts Timestamp) InSamples(sampleRate uint32) uint32 {
 	return uint32(samples.Uint64())
 }
 
-func (ts Timestamp) String() string {
+var ErrTimestampOutOfRange = errors.New("Timestamp out of range")
+
+func (ts Timestamp) asTAI() (time.Time, error) {
 	epoch := time.Unix(0, 0).UTC()
 	totalNs := ts.TotalNanoSeconds()
 
 	if !totalNs.IsInt64() {
-		return fmt.Sprintf("Timestamp out of range (%d s, %d ns)", ts.Seconds(), ts.NanoSeconds())
+		return time.Time{}, ErrTimestampOutOfRange
 	}
 
 	// Convert big.Int to int64 for time.Duration (may truncate for very large values)
 	duration := time.Duration(totalNs.Int64()) * time.Nanosecond
-	t := epoch.Add(duration)
-	return fmt.Sprintf("%s", t.Format(time.RFC3339Nano))
+
+	return epoch.Add(duration), nil
+}
+
+func (ts Timestamp) AsUTC() string {
+	utc, err := ts.asTAI()
+	if errors.Is(err, ErrTimestampOutOfRange) {
+		return fmt.Sprintf("Timestamp out of range (%d s, %d ns)", ts.Seconds(), ts.NanoSeconds())
+	}
+
+	return fmt.Sprintf("%s", utc.Format(time.RFC3339Nano))
+}
+
+func (ts Timestamp) AsTAI() string {
+	tai, err := ts.asTAI()
+	if errors.Is(err, ErrTimestampOutOfRange) {
+		return fmt.Sprintf("Timestamp out of range (%d s, %d ns)", ts.Seconds(), ts.NanoSeconds())
+	}
+
+	utc := ConvertTaiToUtc(tai)
+
+	return fmt.Sprintf("%s", utc.Format(time.RFC3339Nano))
 }
