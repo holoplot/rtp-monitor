@@ -2,6 +2,7 @@ package ui
 
 import (
 	"net"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -108,28 +109,22 @@ func (d *DetailsModalContent) Content() []string {
 
 	l := newLineBuffer(d.headerStyle)
 
-	l.h("BASIC INFORMATION")
+	l.p("Basic Information")
+	l.p("  ├─ ID:               %s", s.ID)
+	l.p("  ├─ ID hash:          %s", s.IDHash())
+	l.p("  ├─ Name:             %s", s.Description.Name)
+	l.p("  └─ Discovery Method: %s", s.DiscoveryMethod)
 	l.p("")
 
-	l.p("ID:               %s", s.ID)
-	l.p("ID hash:          %s", s.IDHash())
-	l.p("Name:             %s", s.Description.Name)
-	l.p("Discovery Method: %s", s.DiscoveryMethod)
-	l.p("")
-
-	l.p("STREAM INFORMATION")
-	l.p("")
-	l.p("Content Type:   %s", s.Description.ContentType)
-	l.p("Sample Rate:    %d Hz", s.Description.SampleRate)
-	l.p("Channels:       %d", s.Description.ChannelCount)
-	l.p("Codec Info:     %s", s.CodecInfo())
-	l.p("")
-
-	l.p("SOURCES")
+	l.p("Stream Information")
+	l.p("  ├─ Content Type:   %s", s.Description.ContentType)
+	l.p("  ├─ Sample Rate:    %d Hz", s.Description.SampleRate)
+	l.p("  ├─ Channels:       %d", s.Description.ChannelCount)
+	l.p("  └─ Codec Info:     %s", s.CodecInfo())
 	l.p("")
 
 	for i, source := range s.Description.Sources {
-		l.p("Source %d:", i+1)
+		l.p("Source %d information:", i+1)
 		l.p("  ├─ Sender address:         %s", source.SenderAddress)
 		l.p("  ├─ Destination address:    %s:%d", source.DestinationAddress, source.DestinationPort)
 		l.p("  ├─ TTL:                    %d", source.TTL)
@@ -143,9 +138,6 @@ func (d *DetailsModalContent) Content() []string {
 
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
-
-	l.p("STREAM STATISTICS")
-	l.p("")
 
 	if d.err != nil {
 		l.p("Error creating stream receiver: %v", d.err)
@@ -167,7 +159,7 @@ func (d *DetailsModalContent) Content() []string {
 	for i, source := range s.Description.Sources {
 		stats := d.sourceStatistics[i]
 
-		l.p("Source %d (%s:%d):", i+1,
+		l.p("Source %d statistics (%s:%d):", i+1,
 			source.DestinationAddress.String(),
 			source.DestinationPort)
 
@@ -176,6 +168,8 @@ func (d *DetailsModalContent) Content() []string {
 		for sender := range stats.senders {
 			senders = append(senders, sender)
 		}
+
+		slices.Sort(senders)
 
 		l.p("  ├─ Senders:         %s", strings.Join(senders, ", "))
 		l.p("  ├─ Packets count:   %d", stats.packetCount)
@@ -187,15 +181,12 @@ func (d *DetailsModalContent) Content() []string {
 	}
 
 	if d.ptpMonitor != nil {
-		l.p("PTP TRANSMITTERS")
-		l.p("")
-
 		d.ptpMonitor.ForEachTransmitter(func(ci ptp.ClockIdentity, t *ptp.Transmitter) {
 			ptpSamples := t.LastTimestamp.InSamples(d.stream.Description.SampleRate)
 
-			l.p("%s (domain %d):", ci, t.Domain)
-			l.p("  PTP timestamp: %s", t.LastTimestamp)
-			l.p("  RTP samples:   %d", ptpSamples)
+			l.p("PTP Transmitter %s (domain %d):", ci, t.Domain)
+			l.p("  ├─ PTP timestamp: %s", t.LastTimestamp)
+			l.p("  └─ RTP samples:   %d", ptpSamples)
 			l.p("")
 		})
 	} else {

@@ -7,23 +7,16 @@ import (
 )
 
 type lineBuffer struct {
-	l           []string
-	headerStyle lipgloss.Style
+	l []string
 }
 
 func newLineBuffer(headerStyle lipgloss.Style) *lineBuffer {
-	return &lineBuffer{
-		headerStyle: headerStyle,
-	}
+	return &lineBuffer{}
 }
 
 func (l *lineBuffer) p(fmtString string, args ...any) {
 	s := fmt.Sprintf(fmtString, args...)
 	l.l = append(l.l, s)
-}
-
-func (l *lineBuffer) h(s string) {
-	l.l = append(l.l, l.headerStyle.Render(s))
 }
 
 func (l *lineBuffer) lines() []string {

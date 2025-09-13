@@ -16,7 +16,6 @@ import (
 	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
 	"github.com/holoplot/rtp-monitor/internal/stream"
-	"github.com/holoplot/rtp-monitor/internal/theme"
 	"github.com/pion/rtp/v2"
 )
 
@@ -58,27 +57,6 @@ func NewRecordModalContent(s *stream.Stream, wavFileFolder string) *RecordModalC
 	}
 
 	return v
-}
-
-// createVUModalStyles creates the VU modal styles
-func createRecordModalStyles() VUModalStyles {
-	return VUModalStyles{
-		StreamName: lipgloss.NewStyle().
-			Foreground(theme.Colors.Secondary).
-			Bold(true).
-			Width(20),
-		MeterClip: lipgloss.NewStyle().
-			Foreground(theme.Colors.StatusError).
-			Background(theme.Colors.Background).
-			Bold(true),
-		ScaleLabel: lipgloss.NewStyle().
-			Foreground(theme.Colors.Secondary),
-		Reset: lipgloss.NewStyle().
-			Foreground(theme.Colors.Primary).
-			Background(theme.Colors.Background),
-		Background: lipgloss.NewStyle().
-			Background(theme.Colors.Background),
-	}
 }
 
 func (r *RecordModalContent) rtpReceiverCallback(sourceIndex int, _ net.Addr, packet *rtp.Packet) {
@@ -202,7 +180,7 @@ func (r *RecordModalContent) Close() {
 func (r *RecordModalContent) Content() []string {
 	l := newLineBuffer(lipgloss.NewStyle())
 
-	l.h("RECORDING ...")
+	l.p("RECORDING ...")
 	l.p("")
 
 	for i, rec := range r.recordings {

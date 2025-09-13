@@ -18,6 +18,11 @@ import (
 
 type floatSample float64
 
+const (
+	clipThreshold = -1 // dBFS
+	clipTimeout   = time.Second * 5
+)
+
 // VUModalContent implements ModalContentProvider for VU meter display
 type VUModalContent struct {
 	mutex sync.Mutex
@@ -40,7 +45,6 @@ type VUModalStyles struct {
 	StreamName lipgloss.Style
 	MeterClip  lipgloss.Style
 	ScaleLabel lipgloss.Style
-	Reset      lipgloss.Style
 	Background lipgloss.Style
 }
 
@@ -50,11 +54,10 @@ type sourceMeters struct {
 
 // channelMeter holds the current state of a VU meter
 type channelMeter struct {
-	maxSample     floatSample
-	levels        *ring.RingBuffer[floatSample]
-	clipIndicator bool
-	clipTime      time.Time
-	progressBar   *VUProgress // VU progress bars for each channel
+	maxSample   floatSample
+	levels      *ring.RingBuffer[floatSample]
+	clipTime    time.Time
+	progressBar *VUProgress // VU progress bars for each channel
 }
 
 // NewVUModalContent creates a new VU modal content provider
@@ -94,13 +97,9 @@ func createVUModalStyles() VUModalStyles {
 			Width(20),
 		MeterClip: lipgloss.NewStyle().
 			Foreground(theme.Colors.StatusError).
-			Background(theme.Colors.Background).
 			Bold(true),
 		ScaleLabel: lipgloss.NewStyle().
 			Foreground(theme.Colors.Secondary),
-		Reset: lipgloss.NewStyle().
-			Foreground(theme.Colors.Primary).
-			Background(theme.Colors.Background),
 		Background: lipgloss.NewStyle().
 			Background(theme.Colors.Background),
 	}
@@ -185,15 +184,21 @@ func (v *VUModalContent) renderSourceMeters(sm *sourceMeters, meterWidth int) []
 			avg /= floatSample(len(samples))
 			db = math.Log10(float64(avg)) * 20
 
+			if db > clipThreshold {
+				meter.clipTime = time.Now()
+			}
+
 			if math.IsNaN(db) {
 				panic(fmt.Sprintf("NaN encountered in channel %d, len(samples)=%d, avg=%f samples=%v", ch+1, len(samples), avg, samples))
 			}
 		}
 
+		clipping := time.Since(meter.clipTime) < clipTimeout
+
 		channelLabel := fmt.Sprintf("Ch%d", ch+1)
 		dbText := fmt.Sprintf("%6.1f dB", db)
 		meterLine := v.renderVUMeter(meter, db, meterWidth)
-		clipIndicator := v.renderClipIndicator(meter.clipIndicator)
+		clipIndicator := v.renderClipIndicator(clipping)
 
 		line := fmt.Sprintf("  %-3s %s %s %s", channelLabel, dbText, meterLine, clipIndicator)
 		lines = append(lines, line)
