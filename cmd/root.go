@@ -135,7 +135,7 @@ func run(cmd *cobra.Command, args []string) error {
 		return names
 	}
 
-	slog.Info("Multicast-capable interfaces found", "interfaces", ifiNames())
+	slog.Info("Starting monitor", "interfaces", ifiNames())
 
 	manager := stream.NewManager(multicastIfis)
 
