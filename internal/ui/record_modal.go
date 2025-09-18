@@ -172,6 +172,11 @@ func (r *RecordModalContent) Close() {
 
 		if rec.file != nil {
 			rec.file.Close()
+
+			// Empty files are worthless, so remove them to avoid confusion
+			if rec.bytesCounter == 0 {
+				os.Remove(rec.file.Name())
+			}
 		}
 	}
 }
