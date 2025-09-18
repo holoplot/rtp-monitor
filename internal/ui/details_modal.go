@@ -124,61 +124,46 @@ func (d *DetailsModalContent) Content() []string {
 	l.p("  └─ Codec Info:     %s", s.CodecInfo())
 	l.p("")
 
-	for i, source := range s.Description.Sources {
-		l.p("Source %d information:", i+1)
-		l.p("  ├─ Sender address:         %s", source.SenderAddress)
-		l.p("  ├─ Destination address:    %s:%d", source.DestinationAddress, source.DestinationPort)
-		l.p("  ├─ TTL:                    %d", source.TTL)
-		l.p("  ├─ Frames per packet:      %d", source.FramesPerPacket)
-		l.p("  ├─ Clock domain:           %s", source.ClockDomain)
-		l.p("  ├─ Reference clock:        %s", source.ReferenceClock)
-		l.p("  ├─ Media clock:            %s", source.MediaClock)
-		l.p("  └─ Sync time:              %d", source.SyncTime)
-		l.p("")
-	}
-
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 
 	if d.err != nil {
 		l.p("Error creating stream receiver: %v", d.err)
+	} else {
+		dur := time.Since(d.lastUpdate)
 
-		return l.lines()
-	}
+		if dur > time.Second {
+			for _, stats := range d.sourceStatistics {
+				stats.packetRate = float64(stats.packetCount-stats.lastPacketCount) / dur.Seconds()
+				stats.lastPacketCount = stats.packetCount
+			}
 
-	dur := time.Since(d.lastUpdate)
-
-	if dur > time.Second {
-		for _, stats := range d.sourceStatistics {
-			stats.packetRate = float64(stats.packetCount-stats.lastPacketCount) / dur.Seconds()
-			stats.lastPacketCount = stats.packetCount
+			d.lastUpdate = time.Now()
 		}
 
-		d.lastUpdate = time.Now()
-	}
+		for i, source := range s.Description.Sources {
+			stats := d.sourceStatistics[i]
 
-	for i, source := range s.Description.Sources {
-		stats := d.sourceStatistics[i]
+			l.p("Source %d statistics (%s:%d):", i+1,
+				source.DestinationAddress.String(),
+				source.DestinationPort)
 
-		l.p("Source %d statistics (%s:%d):", i+1,
-			source.DestinationAddress.String(),
-			source.DestinationPort)
+			var senders []string
 
-		var senders []string
+			for sender := range stats.senders {
+				senders = append(senders, sender)
+			}
 
-		for sender := range stats.senders {
-			senders = append(senders, sender)
+			slices.Sort(senders)
+
+			l.p("  ├─ Senders:         %s", strings.Join(senders, ", "))
+			l.p("  ├─ Packets count:   %d", stats.packetCount)
+			l.p("  ├─ Packets rate:    %.2f/s", stats.packetRate)
+			l.p("  ├─ Parsing errors:  %d", d.receiver.RTPErrors(i))
+			l.p("  ├─ Sequence errors: %d", stats.sequenceErrors)
+			l.p("  └─ Last timestamp:  %d", stats.lastRTPTimestamp)
+			l.p("")
 		}
-
-		slices.Sort(senders)
-
-		l.p("  ├─ Senders:         %s", strings.Join(senders, ", "))
-		l.p("  ├─ Packets count:   %d", stats.packetCount)
-		l.p("  ├─ Packets rate:    %.2f/s", stats.packetRate)
-		l.p("  ├─ Parsing errors:  %d", d.receiver.RTPErrors(i))
-		l.p("  ├─ Sequence errors: %d", stats.sequenceErrors)
-		l.p("  └─ Last timestamp:  %d", stats.lastRTPTimestamp)
-		l.p("")
 	}
 
 	if d.ptpMonitor != nil {
@@ -193,6 +178,19 @@ func (d *DetailsModalContent) Content() []string {
 		})
 	} else {
 		l.p("[PTP Transmitter information unavailable]")
+	}
+
+	for i, source := range s.Description.Sources {
+		l.p("Source %d information (from SDP):", i+1)
+		l.p("  ├─ Sender address:         %s", source.SenderAddress)
+		l.p("  ├─ Destination address:    %s:%d", source.DestinationAddress, source.DestinationPort)
+		l.p("  ├─ TTL:                    %d", source.TTL)
+		l.p("  ├─ Frames per packet:      %d", source.FramesPerPacket)
+		l.p("  ├─ Clock domain:           %s", source.ClockDomain)
+		l.p("  ├─ Reference clock:        %s", source.ReferenceClock)
+		l.p("  ├─ Media clock:            %s", source.MediaClock)
+		l.p("  └─ Sync time:              %d", source.SyncTime)
+		l.p("")
 	}
 
 	return l.lines()
