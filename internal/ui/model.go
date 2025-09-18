@@ -125,7 +125,7 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Handle modal input first if any modal is visible
 	if m.modal.IsVisible() {
 		switch msg.String() {
-		case "esc":
+		case "esc", "x":
 			m.modal.Hide()
 			return m, nil
 		case "up", "k":
