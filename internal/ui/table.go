@@ -83,7 +83,7 @@ func (t *TableModel) SetStreams(streams []*stream.Stream) {
 // SetSize sets the dimensions of the table
 func (t *TableModel) SetSize(width, height int) {
 	t.width = width
-	t.height = height - 1 // Account for footer space
+	t.height = height - 2 // Account for footer space only
 	t.adjustView()
 }
 
@@ -117,7 +117,7 @@ func (t *TableModel) adjustView() {
 		return
 	}
 
-	visibleRows := t.height - 3 // Account for header and borders
+	visibleRows := t.height - 1 // Account for fixed header
 	if visibleRows < 1 {
 		visibleRows = 1
 	}
@@ -150,29 +150,50 @@ func (t *TableModel) Render() string {
 
 	var b strings.Builder
 
-	// Render header
+	// Render fixed header (doesn't scroll)
 	b.WriteString(t.renderHeader())
 	b.WriteString("\n")
 
-	// Render rows
-	visibleRows := t.height - 3
+	// Render scrollable content
+	scrollableContent := t.renderScrollableContent()
+	b.WriteString(scrollableContent)
+
+	return b.String()
+}
+
+// renderScrollableContent renders only the scrollable data rows
+func (t *TableModel) renderScrollableContent() string {
+	var b strings.Builder
+
+	// Calculate visible rows (subtract 1 for the fixed header)
+	visibleRows := t.height - 1
 	if visibleRows < 1 {
 		visibleRows = 1
 	}
 
+	// Render actual stream rows first
 	endIndex := t.viewStart + visibleRows
 	if endIndex > len(t.streams) {
 		endIndex = len(t.streams)
 	}
 
+	rowsRendered := 0
 	for i := t.viewStart; i < endIndex; i++ {
-		b.WriteString(t.renderRow(i))
-		if i < endIndex-1 {
+		if rowsRendered > 0 {
 			b.WriteString("\n")
 		}
+		b.WriteString(t.renderRow(i))
+		rowsRendered++
 	}
 
-	// Add scrollbar if needed
+	// Fill remaining space with empty rows to push footer to bottom
+	for rowsRendered < visibleRows {
+		b.WriteString("\n")
+		b.WriteString(t.renderEmptyRow())
+		rowsRendered++
+	}
+
+	// Add scrollbar if needed (only to scrollable content)
 	if len(t.streams) > visibleRows {
 		result := t.addScrollbar(b.String(), visibleRows)
 		return result
@@ -186,7 +207,7 @@ func (t *TableModel) renderEmpty() string {
 	message := "No RTP streams detected"
 
 	return t.styles.Row.
-		Width(t.width - 1).
+		Width(t.width).
 		Height(1).
 		Align(lipgloss.Center).
 		Render(message)
@@ -194,19 +215,26 @@ func (t *TableModel) renderEmpty() string {
 
 // calculateColumnWidths calculates optimal column widths for the table
 func (t *TableModel) calculateColumnWidths() []int {
-	availableWidth := t.width - 1 // Reserve 1 space for scrollbar
+	visibleRows := t.height - 1 // Account for fixed header
+	if visibleRows < 1 {
+		visibleRows = 1
+	}
+
+	// Always reserve space for scrollbar to prevent layout shifts
+	availableWidth := t.width - 2 // Reserve 2 spaces for scrollbar
+
 	if availableWidth < 60 {
 		availableWidth = 60 // Minimum usable width
 	}
 
 	// Distribute width proportionally to accommodate primary/secondary IPs
-	// ID: 5%, Name: 25%, Address: 45%, Codec: 20%, Method: 10%
-	idWidth := (availableWidth * 10) / 100
-	nameWidth := (availableWidth * 30) / 100
-	addressWidth := (availableWidth * 25) / 100
-	codecWidth := (availableWidth * 20) / 100
-	methodWidth := (availableWidth * 10) / 100
-	sourceWidth := availableWidth - nameWidth - addressWidth - codecWidth
+	// ID: 8%, Name: 25%, Address: 35%, Codec: 15%, Method: 8%, Source: 9%
+	idWidth := (availableWidth * 8) / 100
+	nameWidth := (availableWidth * 25) / 100
+	addressWidth := (availableWidth * 35) / 100
+	codecWidth := (availableWidth * 15) / 100
+	methodWidth := (availableWidth * 8) / 100
+	sourceWidth := (availableWidth * 9) / 100
 
 	// Ensure minimum widths
 	if idWidth < 8 {
@@ -250,9 +278,25 @@ func (t *TableModel) renderHeader() string {
 	}
 
 	headerLine := lipgloss.JoinHorizontal(lipgloss.Top, headerParts...)
-	// Ensure the header uses full width
-	if lipgloss.Width(headerLine) < t.width-1 {
-		headerLine += strings.Repeat(" ", t.width-1-lipgloss.Width(headerLine))
+
+	// Calculate target width based on scrollbar visibility
+	visibleRows := t.height - 1 // Account for fixed header
+	if visibleRows < 1 {
+		visibleRows = 1
+	}
+	// Ensure we don't exceed actual terminal width
+	targetWidth := t.width - 2 // Always reserve space for scrollbar
+	if targetWidth < 60 {
+		targetWidth = 60
+	}
+
+	// Ensure the header uses correct width
+	headerWidth := lipgloss.Width(headerLine)
+	if headerWidth < targetWidth {
+		headerLine += strings.Repeat(" ", targetWidth-headerWidth)
+	} else if headerWidth > targetWidth {
+		// This shouldn't happen, but just in case, truncate visually
+		targetWidth = headerWidth
 	}
 	return headerLine
 }
@@ -287,9 +331,25 @@ func (t *TableModel) renderRow(index int) string {
 	}
 
 	rowLine := lipgloss.JoinHorizontal(lipgloss.Top, rowParts...)
-	// Ensure the row uses full width
-	if lipgloss.Width(rowLine) < t.width-1 {
-		rowLine += strings.Repeat(" ", t.width-1-lipgloss.Width(rowLine))
+
+	// Calculate target width based on scrollbar visibility
+	visibleRows := t.height - 1 // Account for fixed header
+	if visibleRows < 1 {
+		visibleRows = 1
+	}
+	// Ensure we don't exceed actual terminal width
+	targetWidth := t.width - 2 // Always reserve space for scrollbar
+	if targetWidth < 60 {
+		targetWidth = 60
+	}
+
+	// Ensure the row uses correct width
+	rowWidth := lipgloss.Width(rowLine)
+	if rowWidth < targetWidth {
+		rowLine += strings.Repeat(" ", targetWidth-rowWidth)
+	} else if rowWidth > targetWidth {
+		// This shouldn't happen, but just in case, adjust target
+		targetWidth = rowWidth
 	}
 	return rowLine
 }
@@ -302,21 +362,37 @@ func (t *TableModel) addScrollbar(content string, visibleRows int) string {
 	}
 
 	totalStreams := len(t.streams)
-	scrollbarHeight := visibleRows
+	if totalStreams <= visibleRows {
+		return content // No scrollbar needed
+	}
+
+	// Calculate scrollbar dimensions
+	scrollbarHeight := len(lines) - 1 // Exclude header line
+	if scrollbarHeight <= 0 {
+		scrollbarHeight = 1
+	}
+
 	thumbSize := max(1, (visibleRows*scrollbarHeight)/totalStreams)
-	thumbPos := (t.viewStart * (scrollbarHeight - thumbSize)) / max(1, totalStreams-visibleRows)
+	maxThumbPos := scrollbarHeight - thumbSize
+	if maxThumbPos <= 0 {
+		maxThumbPos = 1
+	}
+
+	// Calculate thumb position based on current view
+	scrollProgress := float64(t.viewStart) / float64(max(1, totalStreams-visibleRows))
+	thumbPos := int(scrollProgress * float64(maxThumbPos))
 
 	// Create scrollbar
 	scrollbar := make([]string, len(lines))
 	for i := range scrollbar {
 		if i == 0 {
-			scrollbar[i] = " " // Header line
+			scrollbar[i] = "┐" // Header line - top corner
 		} else {
 			lineIndex := i - 1
 			if lineIndex >= thumbPos && lineIndex < thumbPos+thumbSize {
-				scrollbar[i] = t.styles.ScrollThumb.Render("█")
+				scrollbar[i] = "█" // Use block character for thumb
 			} else {
-				scrollbar[i] = t.styles.ScrollBar.Render("│")
+				scrollbar[i] = "│" // Use box drawing character for scrollbar
 			}
 		}
 	}
@@ -325,15 +401,12 @@ func (t *TableModel) addScrollbar(content string, visibleRows int) string {
 	var result []string
 	for i, line := range lines {
 		if i < len(scrollbar) {
-			// The line should already be full width from rendering, just add scrollbar
-			result = append(result, line+scrollbar[i])
+			// The line should already be the right width from renderHeader/renderRow
+			// Just add the scrollbar directly at the visual position
+			combined := line + " " + scrollbar[i]
+			result = append(result, combined)
 		} else {
-			// Pad line to full width and add scrollbar space
-			lineWidth := lipgloss.Width(line)
-			if lineWidth < t.width-1 {
-				line += strings.Repeat(" ", t.width-1-lineWidth)
-			}
-			result = append(result, line+" ")
+			result = append(result, line)
 		}
 	}
 
@@ -353,6 +426,12 @@ func truncateString(s string, width int) string {
 		return s[:width]
 	}
 	return s[:width-3] + "..."
+}
+
+// renderEmptyRow renders an empty row with proper width
+func (t *TableModel) renderEmptyRow() string {
+	targetWidth := t.width - 2 // Always reserve space for scrollbar
+	return strings.Repeat(" ", targetWidth)
 }
 
 // max returns the maximum of two integers

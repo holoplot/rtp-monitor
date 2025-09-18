@@ -88,7 +88,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		m.table.SetSize(msg.Width, msg.Height-4) // Leave space for header/footer
+		m.table.SetSize(msg.Width, msg.Height-5) // Leave space for header and footer
 
 		// Pass window size to overlay if it exists
 		if m.overlay != nil {
@@ -331,7 +331,7 @@ func (m *Model) renderMainView() string {
 	// Footer
 	footer := m.renderFooter()
 
-	// Calculate available height for table
+	// Calculate available height for table and add padding to push footer to bottom
 	headerHeight := lipgloss.Height(header)
 	footerHeight := lipgloss.Height(footer)
 	tableHeight := m.height - headerHeight - footerHeight - 1
@@ -358,7 +358,7 @@ func (m *Model) renderHeader() string {
 	title := lipgloss.NewStyle().
 		Foreground(theme.Colors.Primary).
 		Bold(true).
-		Render(fmt.Sprintf("RTP Stream Monitor v%s", version.GetShortVersion()))
+		Render(fmt.Sprintf("RTP Stream Monitor %s", version.GetShortVersion()))
 
 	streamCount := fmt.Sprintf("Streams: %d", len(m.table.streams))
 	lastUpdate := fmt.Sprintf("Last Update: %s", m.lastUpdate.Format("15:04:05"))
