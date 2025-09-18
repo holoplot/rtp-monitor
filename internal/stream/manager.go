@@ -269,7 +269,7 @@ func (m *Manager) AddStreamFromSDP(sdp []byte, discoveryMethod DiscoveryMethod, 
 	}
 
 	stream := &Stream{
-		ID:              uniqueID,
+		ID:              fmt.Sprintf("%s @%s", uniqueID, interfaceName),
 		Description:     *description,
 		SDP:             sdp,
 		DiscoveryMethod: discoveryMethod,
