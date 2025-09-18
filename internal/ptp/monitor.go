@@ -45,6 +45,10 @@ func (m *Monitor) parsePacket(_ *net.Interface, _ net.Addr, data []byte) {
 
 		copy(timeStamp.PTP[:], data[34:44])
 
+		if timeStamp.IsZero() {
+			return
+		}
+
 		if transmitter, ok := m.transmitters[clockIdentity]; ok {
 			transmitter.LastTimestamp = timeStamp
 		} else {

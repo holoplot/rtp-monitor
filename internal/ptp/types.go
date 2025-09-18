@@ -51,6 +51,10 @@ func (ts Timestamp) NanoSeconds() uint64 {
 		uint64(ts.PTP[9])
 }
 
+func (ts Timestamp) IsZero() bool {
+	return ts.Seconds() == 0 && ts.NanoSeconds() == 0
+}
+
 // TotalNanoSeconds returns the total nanoseconds since PTP epoch (1900-01-01)
 // using big.Int arithmetic to prevent overflow in large timestamp calculations.
 func (ts Timestamp) TotalNanoSeconds() *big.Int {
