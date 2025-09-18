@@ -39,10 +39,7 @@ type Manager struct {
 
 	sapListener *sap.Listener
 
-	dbusConn       *dbus.Conn
-	avahiServer    *avahi.Server
-	serviceBrowser *avahi.ServiceBrowser
-	mDnsStreams    map[string]*Stream
+	mDnsStreams map[string]*Stream
 }
 
 // NewManager creates a new stream manager
@@ -69,10 +66,14 @@ func (m *Manager) update() {
 		return
 	}
 
+	m.mutex.Lock()
+
 	streams := make([]*Stream, 0, len(m.streams))
 	for _, stream := range m.streams {
 		streams = append(streams, stream)
 	}
+
+	m.mutex.Unlock()
 
 	// Sort by name
 	sort.Slice(streams, func(i, j int) bool {
@@ -111,20 +112,14 @@ func readRTSP(uri string) ([]byte, error) {
 func (m *Manager) MonitorMDns() error {
 	var err error
 
-	m.dbusConn, err = dbus.SystemBus()
+	dbusConn, err := dbus.SystemBus()
 	if err != nil {
 		return fmt.Errorf("can not connect to dbus: %w", err)
 	}
 
-	m.avahiServer, err = avahi.ServerNew(m.dbusConn)
+	avahiServer, err := avahi.ServerNew(dbusConn)
 	if err != nil {
 		return fmt.Errorf("avahi.ServerNew() failed: %w", err)
-	}
-
-	m.serviceBrowser, err = m.avahiServer.ServiceBrowserNew(avahi.InterfaceUnspec, avahi.ProtoUnspec,
-		mDnsRavennaServiceName, "local", 0)
-	if err != nil {
-		return fmt.Errorf("avahi.ServiceBrowserNew() failed: %w", err)
 	}
 
 	keyForService := func(service avahi.Service) string {
@@ -132,15 +127,22 @@ func (m *Manager) MonitorMDns() error {
 	}
 
 	go func() {
+		serviceBrowser, err := avahiServer.ServiceBrowserNew(avahi.InterfaceUnspec, avahi.ProtoUnspec,
+			mDnsRavennaServiceName, "local", 0)
+		if err != nil {
+			fmt.Printf("avahi.ServiceBrowserNew() failed: %v\n", err)
+			return
+		}
+
 		for {
 			select {
-			case avahiService, ok := <-m.serviceBrowser.AddChannel:
+			case avahiService, ok := <-serviceBrowser.AddChannel:
 				if !ok {
 					return
 				}
 
 				go func(service avahi.Service) {
-					resolver, err := m.avahiServer.ServiceResolverNew(
+					resolver, err := avahiServer.ServiceResolverNew(
 						service.Interface, service.Protocol, service.Name,
 						service.Type, service.Domain, service.Protocol, 0)
 					if err != nil {
@@ -171,16 +173,13 @@ func (m *Manager) MonitorMDns() error {
 							return
 
 						case <-time.After(mDnsResolveTimeout):
-							fmt.Printf("Service resolution timed out: %s.%s@%d_%d\n",
-								service.Name, service.Domain, service.Interface, service.Protocol)
 							return
 						}
 					}
 				}(avahiService)
 
-			case avahiService, ok := <-m.serviceBrowser.RemoveChannel:
+			case avahiService, ok := <-serviceBrowser.RemoveChannel:
 				if !ok {
-					fmt.Println("ServiceBrowser channel closed")
 					return
 				}
 
@@ -188,9 +187,10 @@ func (m *Manager) MonitorMDns() error {
 				if stream, ok := m.mDnsStreams[keyForService(avahiService)]; ok {
 					delete(m.mDnsStreams, keyForService(avahiService))
 					delete(m.streams, stream.ID)
-					m.update()
 				}
 				m.mutex.Unlock()
+
+				m.update()
 			}
 		}
 	}()
@@ -255,10 +255,9 @@ func (m *Manager) LoadSDPFile(filename string) error {
 // AddStream adds a new stream to the manager
 func (m *Manager) AddStream(stream *Stream) {
 	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
 	stream.manager = m
 	m.streams[stream.ID] = stream
+	m.mutex.Unlock()
 
 	m.update()
 }
@@ -285,9 +284,9 @@ func (m *Manager) AddStreamFromSDP(sdp []byte, discoveryMethod DiscoveryMethod) 
 // RemoveStream removes a stream from the manager
 func (m *Manager) RemoveStream(id string) {
 	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
 	delete(m.streams, id)
+	m.mutex.Unlock()
+
 	m.update()
 }
 
@@ -316,7 +315,6 @@ func (m *Manager) GetAllStreams() []*Stream {
 // CleanupStaleStreams removes streams that haven't been seen for a while
 func (m *Manager) cleanupStaleStreams() {
 	m.mutex.Lock()
-	defer m.mutex.Unlock()
 
 	removed := false
 
@@ -326,6 +324,8 @@ func (m *Manager) cleanupStaleStreams() {
 			removed = true
 		}
 	}
+
+	m.mutex.Unlock()
 
 	if removed {
 		m.update()
