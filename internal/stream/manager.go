@@ -77,9 +77,14 @@ func (m *Manager) update() {
 
 	m.mutex.Unlock()
 
-	// Sort by name
+	// Sort by name, with ID as secondary sort key
 	sort.Slice(streams, func(i, j int) bool {
-		return streams[i].Description.Name < streams[j].Description.Name
+		nameA := streams[i].Description.Name
+		nameB := streams[j].Description.Name
+		if nameA == nameB {
+			return streams[i].ID < streams[j].ID
+		}
+		return nameA < nameB
 	})
 
 	m.updateCallback(streams)
