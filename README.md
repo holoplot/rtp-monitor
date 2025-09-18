@@ -93,11 +93,13 @@ Usage:
   rtp-monitor [flags]
 
 Flags:
-  -h, --help                    help for rtp-monitor
-      --interface stringArray   Network interface to use (can be used multiple times)
-      --sdp stringArray         SDP file to parse (can be used multiple times)
-  -v, --version                 version for rtp-monitor
-      --wav string              Folder to save WAV files
+-h, --help                    help for rtp-monitor
+    --interface stringArray   Network interface to use (can be used multiple times)
+    --no-mdns                 Disable mDNS discovery
+    --no-sap                  Disable SAP discovery
+    --sdp stringArray         SDP file to parse (can be used multiple times)
+-v, --version                 version for rtp-monitor
+    --wav string              Folder to save WAV files
 ```
 
 ## Terminal UI Controls
@@ -120,9 +122,10 @@ Flags:
 - `q`, `Ctrl+C`, or `Esc`: Quit application
 
 ### Modal Details
-- `↑/↓`: Scroll through detailed information
-- `Esc`: Close modal and return to main view
-`
+- `↑` or `k`: Move modal content up
+- `↓` or `j`: Move modal content down
+- `Esc`, `x`: Close modal and return to main view
+
 ## Dependencies
 
 - [Cobra](https://github.com/spf13/cobra): CLI framework

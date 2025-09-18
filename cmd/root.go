@@ -18,6 +18,8 @@ var (
 	interfaceNames []string
 	sdpFiles       []string
 	wavFileFolder  string
+	noSAP          bool
+	noMDNS         bool
 )
 
 var rootCmd = &cobra.Command{
@@ -52,6 +54,8 @@ func init() {
 	rootCmd.Flags().StringArrayVar(&interfaceNames, "interface", []string{}, "Network interface to use (can be used multiple times)")
 	rootCmd.Flags().StringArrayVar(&sdpFiles, "sdp", []string{}, "SDP file to parse (can be used multiple times)")
 	rootCmd.Flags().StringVar(&wavFileFolder, "wav", "", "Folder to save WAV files")
+	rootCmd.Flags().BoolVar(&noSAP, "no-sap", false, "Disable SAP discovery")
+	rootCmd.Flags().BoolVar(&noMDNS, "no-mdns", false, "Disable mDNS discovery")
 }
 
 // run is the main execution function
@@ -144,12 +148,20 @@ func run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error loading SDP files: %w", err)
 	}
 
-	if err := manager.MonitorSAP(); err != nil {
-		slog.Error("error monitoring SAP", "error", err)
+	if noSAP {
+		slog.Info("SAP discovery disabled")
+	} else {
+		if err := manager.MonitorSAP(); err != nil {
+			slog.Error("error monitoring SAP", "error", err)
+		}
 	}
 
-	if err := manager.MonitorMDns(); err != nil {
-		slog.Error("error monitoring mDNS", "error", err)
+	if noMDNS {
+		slog.Info("mDNS discovery disabled")
+	} else {
+		if err := manager.MonitorMDns(); err != nil {
+			slog.Error("error monitoring mDNS", "error", err)
+		}
 	}
 
 	// Track PTP Transitters
