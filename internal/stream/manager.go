@@ -24,6 +24,8 @@ const (
 
 	mDnsRavennaServiceName = "_ravenna_session._sub._rtsp._tcp"
 	mDnsResolveTimeout     = time.Minute
+
+	sapAddress = "239.255.255.255:9875"
 )
 
 type UpdateCallback func([]*Stream)
@@ -37,7 +39,7 @@ type Manager struct {
 
 	multicastListener *multicast.Listener
 
-	sapListener *sap.Listener
+	sapConsumer *multicast.Consumer
 
 	mDnsStreams map[string]*Stream
 }
@@ -161,7 +163,13 @@ func (m *Manager) MonitorMDns() error {
 								return
 							}
 
-							stream, err := m.AddStreamFromSDP(sdpBytes, DiscoveryMethodMDNS)
+							ifiName := "unknown"
+
+							if ifi, err := net.InterfaceByIndex(int(service.Interface)); err == nil {
+								ifiName = ifi.Name
+							}
+
+							stream, err := m.AddStreamFromSDP(sdpBytes, DiscoveryMethodMDNS, ifiName)
 							if err != nil {
 								return
 							}
@@ -199,27 +207,19 @@ func (m *Manager) MonitorMDns() error {
 }
 
 func (m *Manager) MonitorSAP() error {
-	if listener, err := sap.NewListener(net.ParseIP("239.255.255.255"), nil); err == nil {
-		m.sapListener = listener
-	} else {
+	udpAddr, err := net.ResolveUDPAddr("udp", sapAddress)
+	if err != nil {
 		return err
 	}
 
-	go func() {
-		for {
-			b, err := m.sapListener.ReadPacketRaw()
-			if err != nil {
-				continue
-			}
-
-			p, err := sap.DecodePacket(b)
-			if err != nil {
-				continue
-			}
-
-			m.AddStreamFromSDP(p.Payload, DiscoveryMethodSAP)
+	m.sapConsumer, err = m.multicastListener.AddConsumer(udpAddr, func(ifi *net.Interface, _ net.Addr, payload []byte) {
+		p, err := sap.DecodePacket(payload)
+		if err != nil {
+			return
 		}
-	}()
+
+		m.AddStreamFromSDP(p.Payload, DiscoveryMethodSAP, ifi.Name)
+	})
 
 	return nil
 }
@@ -242,7 +242,7 @@ func (m *Manager) LoadSDPFile(filename string) error {
 		return fmt.Errorf("failed to read file: %w", err)
 	}
 
-	stream, err := m.AddStreamFromSDP(data, DiscoveryMethodManual)
+	stream, err := m.AddStreamFromSDP(data, DiscoveryMethodManual, filename)
 	if err != nil {
 		return fmt.Errorf("failed to add stream from SDP file %s: %w", filename, err)
 	}
@@ -262,7 +262,7 @@ func (m *Manager) AddStream(stream *Stream) {
 	m.update()
 }
 
-func (m *Manager) AddStreamFromSDP(sdp []byte, discoveryMethod DiscoveryMethod) (*Stream, error) {
+func (m *Manager) AddStreamFromSDP(sdp []byte, discoveryMethod DiscoveryMethod, interfaceName string) (*Stream, error) {
 	description, uniqueID, err := ParseSDP(sdp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse SDP: %w", err)
@@ -273,6 +273,7 @@ func (m *Manager) AddStreamFromSDP(sdp []byte, discoveryMethod DiscoveryMethod) 
 		Description:     *description,
 		SDP:             sdp,
 		DiscoveryMethod: discoveryMethod,
+		DiscoverySource: interfaceName,
 		LastSeen:        time.Now(),
 	}
 

@@ -170,12 +170,13 @@ type Stream struct {
 
 	// Discovery method
 	DiscoveryMethod DiscoveryMethod
+	DiscoverySource string
 
 	manager *Manager
 }
 
 func (s *Stream) IDHash() string {
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(s.ID)))[:16]
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(s.DiscoveryMethod.String()+s.DiscoverySource+s.ID)))[:16]
 }
 
 // Update updates the stream's last seen timestamp

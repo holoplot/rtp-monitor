@@ -113,7 +113,8 @@ func (d *DetailsModalContent) Content() []string {
 	l.p("  ├─ ID:               %s", s.ID)
 	l.p("  ├─ ID hash:          %s", s.IDHash())
 	l.p("  ├─ Name:             %s", s.Description.Name)
-	l.p("  └─ Discovery Method: %s", s.DiscoveryMethod)
+	l.p("  ├─ Discovery Method: %s", s.DiscoveryMethod)
+	l.p("  └─ Discovery Source: %s", s.DiscoverySource)
 	l.p("")
 
 	l.p("Stream Information")

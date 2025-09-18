@@ -202,10 +202,11 @@ func (t *TableModel) calculateColumnWidths() []int {
 	// Distribute width proportionally to accommodate primary/secondary IPs
 	// ID: 5%, Name: 25%, Address: 45%, Codec: 20%, Method: 10%
 	idWidth := (availableWidth * 10) / 100
-	nameWidth := (availableWidth * 40) / 100
+	nameWidth := (availableWidth * 30) / 100
 	addressWidth := (availableWidth * 25) / 100
 	codecWidth := (availableWidth * 20) / 100
-	methodWidth := availableWidth - nameWidth - addressWidth - codecWidth
+	methodWidth := (availableWidth * 10) / 100
+	sourceWidth := availableWidth - nameWidth - addressWidth - codecWidth
 
 	// Ensure minimum widths
 	if idWidth < 8 {
@@ -224,13 +225,16 @@ func (t *TableModel) calculateColumnWidths() []int {
 	if methodWidth < 6 {
 		methodWidth = 6
 	}
+	if sourceWidth < 6 {
+		sourceWidth = 6
+	}
 
-	return []int{idWidth, nameWidth, addressWidth, codecWidth, methodWidth}
+	return []int{idWidth, nameWidth, addressWidth, codecWidth, methodWidth, sourceWidth}
 }
 
 // renderHeader renders the table header
 func (t *TableModel) renderHeader() string {
-	headers := []string{"ID", "Name", "Address", "Codec", "Method"}
+	headers := []string{"ID", "Name", "Address", "Codec", "Method", "Source"}
 	widths := t.calculateColumnWidths()
 
 	var headerParts []string
@@ -265,6 +269,7 @@ func (t *TableModel) renderRow(index int) string {
 		truncateString(stream.Address(), widths[2]),
 		truncateString(stream.CodecInfo(), widths[3]),
 		truncateString(stream.DiscoveryMethod.String(), widths[4]),
+		truncateString(stream.DiscoverySource, widths[5]),
 	}
 
 	// Choose style based on selection and alternating rows
