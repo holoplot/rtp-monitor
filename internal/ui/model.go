@@ -189,7 +189,7 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				m.modal.Hide()
 			}
 			detailsProvider := NewDetailsModalContent(selected, m.ptpMonitor)
-			m.modal.Show(detailsProvider, m.width, m.height)
+			m.modal.Show(selected, detailsProvider, m.width, m.height)
 			return m, m.modalTickCmd() // Start updates immediately
 		}
 		return m, nil
@@ -203,7 +203,7 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 					m.modal.Hide()
 				}
 				fpgaRxProvider := NewFpgaRxModalContent(selected)
-				m.modal.Show(fpgaRxProvider, m.width, m.height)
+				m.modal.Show(selected, fpgaRxProvider, m.width, m.height)
 				return m, m.modalTickCmd() // Start updates immediately
 			}
 		}
@@ -217,7 +217,7 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				m.modal.Hide()
 			}
 			vuProvider := NewVUModalContent(selected)
-			m.modal.Show(vuProvider, m.width, m.height)
+			m.modal.Show(selected, vuProvider, m.width, m.height)
 			return m, m.modalTickCmd() // Start updates immediately
 		}
 		return m, nil
@@ -230,7 +230,7 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				m.modal.Hide()
 			}
 			sdpProvider := NewSDPModalContent(selected)
-			m.modal.Show(sdpProvider, m.width, m.height)
+			m.modal.Show(selected, sdpProvider, m.width, m.height)
 			return m, m.modalTickCmd() // Start updates immediately
 		}
 		return m, nil
@@ -243,7 +243,7 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				m.modal.Hide()
 			}
 			rtcpProvider := NewRTCPModalContent(selected)
-			m.modal.Show(rtcpProvider, m.width, m.height)
+			m.modal.Show(selected, rtcpProvider, m.width, m.height)
 			return m, m.modalTickCmd() // Start updates immediately
 		}
 		return m, nil
@@ -256,7 +256,7 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				m.modal.Hide()
 			}
 			recordProvider := NewRecordModalContent(selected, m.wavFileFolder)
-			m.modal.Show(recordProvider, m.width, m.height)
+			m.modal.Show(selected, recordProvider, m.width, m.height)
 			return m, m.modalTickCmd() // Start updates immediately
 		}
 		return m, nil

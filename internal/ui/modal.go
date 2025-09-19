@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/holoplot/rtp-monitor/internal/stream"
 	"github.com/holoplot/rtp-monitor/internal/theme"
 )
 
@@ -55,6 +56,7 @@ func SanitizeASCII(s string) string {
 // ModalModel represents the generic modal component
 type ModalModel struct {
 	provider     ModalContentProvider
+	stream       *stream.Stream
 	width        int
 	height       int
 	scrollOffset int
@@ -112,7 +114,8 @@ func createModalStyles() ModalStyles {
 }
 
 // Show displays the modal with the given content provider and data
-func (m *ModalModel) Show(provider ModalContentProvider, width, height int) {
+func (m *ModalModel) Show(stream *stream.Stream, provider ModalContentProvider, width, height int) {
+	m.stream = stream
 	m.provider = provider
 	m.width = width
 	m.height = height
@@ -302,7 +305,7 @@ func (m *ModalModel) Render() string {
 	}
 
 	// Create title line (centered)
-	title := m.provider.Title()
+	title := m.provider.Title() + " | " + m.stream.Name()
 	titleLine := m.createCenteredTitle(title, contentWidth)
 
 	// Join content and apply content styling to ensure proper foreground color
