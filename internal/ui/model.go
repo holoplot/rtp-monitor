@@ -110,6 +110,24 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.table.SetStreams(msg.Streams)
 		m.lastUpdate = time.Now()
 
+		modalStreamMissing := func() bool {
+			if !m.modal.IsVisible() {
+				return false
+			}
+
+			for _, stream := range msg.Streams {
+				if stream.ID == m.modal.stream.ID {
+					return false
+				}
+			}
+
+			return true
+		}
+
+		if modalStreamMissing() {
+			m.modal.Hide()
+		}
+
 		return m, nil
 	}
 
