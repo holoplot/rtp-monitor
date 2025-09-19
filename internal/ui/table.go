@@ -309,7 +309,7 @@ func (t *TableModel) renderRow(index int) string {
 	// Prepare row data
 	rowData := []string{
 		truncateString(stream.IDHash(), widths[0]),
-		truncateString(stream.Description.Name, widths[1]),
+		truncateString(stream.Name(), widths[1]),
 		truncateString(stream.Address(), widths[2]),
 		truncateString(stream.CodecInfo(), widths[3]),
 		truncateString(stream.DiscoveryMethod.String(), widths[4]),

@@ -175,6 +175,10 @@ type Stream struct {
 	manager *Manager
 }
 
+func (s *Stream) Name() string {
+	return s.Description.Name
+}
+
 func (s *Stream) IDHash() string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(s.ID)))[:16]
 }

@@ -389,7 +389,7 @@ func (m *Model) renderFooter() string {
 	selected := m.table.GetSelected()
 	var selectedInfo string
 	if selected != nil {
-		selectedInfo = fmt.Sprintf("Selected: %s (%s)", selected.Description.Name, selected.Address())
+		selectedInfo = fmt.Sprintf("Selected: %s (%s)", selected.Name(), selected.Address())
 	} else {
 		selectedInfo = "No stream selected"
 	}

@@ -99,7 +99,7 @@ func (r *RecordModalContent) Init(width, height int) {
 		}
 
 		re := regexp.MustCompile(`[^a-zA-Z0-9]`)
-		streamName := re.ReplaceAllString(r.stream.Description.Name, "_")
+		streamName := re.ReplaceAllString(r.stream.Name(), "_")
 		fileName := fmt.Sprintf("%s_%s-%d.wav", streamName, r.startTime.Format(time.RFC3339), i)
 		fileName = path.Join(r.wavFileFolder, fileName)
 

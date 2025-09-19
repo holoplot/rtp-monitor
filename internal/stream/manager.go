@@ -80,8 +80,8 @@ func (m *Manager) update() {
 
 	// Sort by name, with ID as secondary sort key
 	sort.Slice(streams, func(i, j int) bool {
-		nameA := streams[i].Description.Name
-		nameB := streams[j].Description.Name
+		nameA := streams[i].Name()
+		nameB := streams[j].Name()
 		if nameA == nameB {
 			return streams[i].ID < streams[j].ID
 		}
@@ -253,7 +253,7 @@ func (m *Manager) LoadSDPFile(filename string) error {
 		return fmt.Errorf("failed to add stream from SDP file %s: %w", filename, err)
 	}
 
-	slog.Info("Loaded stream", "name", stream.Description.Name, "filename", filename)
+	slog.Info("Loaded stream", "name", stream.Name(), "filename", filename)
 
 	return nil
 }
