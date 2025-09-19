@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"path"
 	"sort"
 	"sync"
 	"time"
@@ -247,7 +248,7 @@ func (m *Manager) LoadSDPFile(filename string) error {
 		return fmt.Errorf("failed to read file: %w", err)
 	}
 
-	stream, err := m.AddStreamFromSDP(data, DiscoveryMethodManual, filename)
+	stream, err := m.AddStreamFromSDP(data, DiscoveryMethodManual, path.Base(filename))
 	if err != nil {
 		return fmt.Errorf("failed to add stream from SDP file %s: %w", filename, err)
 	}
