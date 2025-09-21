@@ -24,6 +24,7 @@ type ContentType string
 
 const (
 	ContentTypeUndefined ContentType = "Undefined"
+	ContentTypePCM16     ContentType = "PCM16"
 	ContentTypePCM24     ContentType = "PCM24"
 )
 

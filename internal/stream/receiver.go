@@ -66,6 +66,8 @@ func (r *RTPReceiver) ExtractSamples(packet *rtp.Packet) ([]SampleFrame, error) 
 	var bytesPerSample uint32
 
 	switch r.stream.Description.ContentType {
+	case ContentTypePCM16:
+		bytesPerSample = 2
 	case ContentTypePCM24:
 		bytesPerSample = 3
 	default:
@@ -86,6 +88,12 @@ func (r *RTPReceiver) ExtractSamples(packet *rtp.Packet) ([]SampleFrame, error) 
 
 		for ch := range channels {
 			switch bytesPerSample {
+			case 2:
+				value := uint32(packet.Payload[i])<<24 |
+					uint32(packet.Payload[i+1])<<16
+
+				frame[ch] = Sample(value)
+
 			case 3:
 				value := uint32(packet.Payload[i])<<24 |
 					uint32(packet.Payload[i+1])<<16 |
