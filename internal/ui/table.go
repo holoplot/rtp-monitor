@@ -68,15 +68,38 @@ func createTableStyles() TableStyles {
 }
 
 // SetStreams updates the streams displayed in the table
+// When new streams are discovered:
+// - The currently selected stream remains selected if it still exists
+// - The selection remains visible with respect to the scrolled table view
+// - If the selected stream disappears, the first stream in the list is selected
 func (t *TableModel) SetStreams(streams []*stream.Stream) {
-	t.streams = streams
-	// Ensure selected index is valid
-	if t.selectedIndex >= len(streams) {
-		t.selectedIndex = len(streams) - 1
+	var currentlySelectedID string
+
+	// Remember the currently selected stream ID
+	if t.selectedIndex >= 0 && t.selectedIndex < len(t.streams) {
+		currentlySelectedID = t.streams[t.selectedIndex].ID
 	}
-	if t.selectedIndex < 0 {
+
+	t.streams = streams
+
+	// Try to maintain the current selection by finding the same stream ID
+	if currentlySelectedID != "" {
+		for i, stream := range streams {
+			if stream.ID == currentlySelectedID {
+				t.selectedIndex = i
+				t.adjustView() // Keep selection visible in scrolled view
+				return
+			}
+		}
+	}
+
+	// If the previously selected stream is not found, select the first stream
+	if len(streams) > 0 {
+		t.selectedIndex = 0
+	} else {
 		t.selectedIndex = 0
 	}
+
 	t.adjustView()
 }
 
