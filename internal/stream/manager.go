@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bluenviron/gortsplib/v4"
-	"github.com/bluenviron/gortsplib/v4/pkg/base"
+	"github.com/bluenviron/gortsplib/v5"
+	"github.com/bluenviron/gortsplib/v5/pkg/base"
 	"github.com/godbus/dbus/v5"
 	"github.com/holoplot/go-avahi"
 	"github.com/holoplot/go-multicast/pkg/multicast"
@@ -103,9 +103,10 @@ func readRTSP(uri string) ([]byte, error) {
 
 	c := gortsplib.Client{
 		Scheme: u.Scheme,
+		Host:   u.Host,
 	}
 
-	if err := c.Start(u.Scheme, u.Host); err != nil {
+	if err := c.Start(); err != nil {
 		return nil, fmt.Errorf("failed to start client: %w", err)
 	}
 
