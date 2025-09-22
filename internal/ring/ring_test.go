@@ -309,10 +309,10 @@ func TestConcurrency(t *testing.T) {
 	wg.Add(numGoroutines * 2) // Writers and readers
 
 	// Start writer goroutines
-	for i := 0; i < numGoroutines; i++ {
+	for i := range numGoroutines {
 		go func(id int) {
 			defer wg.Done()
-			for j := 0; j < numOpsPerGoroutine; j++ {
+			for j := range numOpsPerGoroutine {
 				rb.Push(id*1000 + j)
 				time.Sleep(time.Microsecond) // Small delay to increase contention
 			}
@@ -320,10 +320,10 @@ func TestConcurrency(t *testing.T) {
 	}
 
 	// Start reader goroutines
-	for i := 0; i < numGoroutines; i++ {
+	for range numGoroutines {
 		go func() {
 			defer wg.Done()
-			for j := 0; j < numOpsPerGoroutine; j++ {
+			for range numOpsPerGoroutine {
 				rb.Pop()
 				rb.Peek()
 				rb.Size()
@@ -347,7 +347,7 @@ func TestConcurrentIterators(t *testing.T) {
 	rb := NewRingBuffer[int](50)
 
 	// Fill buffer
-	for i := 0; i < 30; i++ {
+	for i := range 30 {
 		rb.Push(i)
 	}
 
@@ -356,7 +356,7 @@ func TestConcurrentIterators(t *testing.T) {
 	wg.Add(numIterators + 1) // Iterators + one writer
 
 	// Start concurrent iterators
-	for i := 0; i < numIterators; i++ {
+	for i := range numIterators {
 		go func(id int) {
 			defer wg.Done()
 			it := rb.NewIterator()
@@ -466,8 +466,8 @@ func findSubstring(s, substr string) bool {
 // Benchmark tests
 func BenchmarkPush(b *testing.B) {
 	rb := NewRingBuffer[int](1000)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+
+	for i := 0; b.Loop(); i++ {
 		rb.Push(i)
 	}
 }
@@ -475,11 +475,11 @@ func BenchmarkPush(b *testing.B) {
 func BenchmarkPop(b *testing.B) {
 	rb := NewRingBuffer[int](1000)
 	// Fill buffer first
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		rb.Push(i)
 	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+
+	for i := 0; b.Loop(); i++ {
 		rb.Push(i) // Keep it filled
 		rb.Pop()
 	}
@@ -488,11 +488,11 @@ func BenchmarkPop(b *testing.B) {
 func BenchmarkIterator(b *testing.B) {
 	rb := NewRingBuffer[int](1000)
 	// Fill buffer
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		rb.Push(i)
 	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+
+	for b.Loop() {
 		it := rb.NewIterator()
 		for it.HasNext() {
 			it.Next()

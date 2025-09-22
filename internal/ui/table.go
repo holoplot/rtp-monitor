@@ -195,10 +195,7 @@ func (t *TableModel) renderScrollableContent() string {
 	}
 
 	// Render actual stream rows first
-	endIndex := t.viewStart + visibleRows
-	if endIndex > len(t.streams) {
-		endIndex = len(t.streams)
-	}
+	endIndex := min(t.viewStart+visibleRows, len(t.streams))
 
 	rowsRendered := 0
 	for i := t.viewStart; i < endIndex; i++ {

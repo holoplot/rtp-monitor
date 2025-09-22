@@ -33,8 +33,8 @@ func (s *SDPModalContent) Close() {
 func (s *SDPModalContent) Content() []string {
 	var lines []string
 
-	sdpLines := strings.Split(string(s.stream.SDP), "\n")
-	for _, line := range sdpLines {
+	sdpLines := strings.SplitSeq(string(s.stream.SDP), "\n")
+	for line := range sdpLines {
 		lines = append(lines, SanitizeASCII(line))
 	}
 
