@@ -170,7 +170,7 @@ func (d *DetailsModalContent) Content() []string {
 		d.ptpMonitor.ForEachTransmitter(func(ci ptp.ClockIdentity, t *ptp.Transmitter) {
 			ptpSamples := t.LastTimestamp.InSamples(d.stream.Description.SampleRate)
 
-			l.p("PTP Transmitter %s (domain %d):", ci, t.Domain)
+			l.p("PTP Transmitter %s, domain %d, interface %s:", ci, t.Domain, t.IfiName)
 			l.p("  ├─ PTP timestamp (UTC): %s", t.LastTimestamp.AsUTC())
 			l.p("  ├─ PTP timestamp (TAI): %s", t.LastTimestamp.AsTAI())
 			l.p("  └─ RTP samples:         %d", ptpSamples)

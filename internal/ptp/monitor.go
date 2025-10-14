@@ -12,6 +12,7 @@ import (
 type Transmitter struct {
 	Domain        uint8
 	LastTimestamp Timestamp
+	IfiName       string
 }
 
 type Monitor struct {
@@ -21,7 +22,7 @@ type Monitor struct {
 	transmitters      map[ClockIdentity]*Transmitter
 }
 
-func (m *Monitor) parsePacket(_ *net.Interface, _ net.Addr, data []byte) {
+func (m *Monitor) parsePacket(ifi *net.Interface, _ net.Addr, data []byte) {
 	now := time.Now()
 
 	if len(data) < 44 {
@@ -51,10 +52,12 @@ func (m *Monitor) parsePacket(_ *net.Interface, _ net.Addr, data []byte) {
 
 		if transmitter, ok := m.transmitters[clockIdentity]; ok {
 			transmitter.LastTimestamp = timeStamp
+			transmitter.IfiName = ifi.Name
 		} else {
 			m.transmitters[clockIdentity] = &Transmitter{
 				Domain:        domainNumber,
 				LastTimestamp: timeStamp,
+				IfiName:       ifi.Name,
 			}
 		}
 	}
