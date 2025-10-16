@@ -142,14 +142,8 @@ func isLinux() bool {
 func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Handle modal input first if any modal is visible
 	if m.modal.IsVisible() {
-		// Check for actual ESC key to close modal
-		if msg.Type == tea.KeyEsc {
-			m.modal.Hide()
-			return m, nil
-		}
-
 		switch msg.String() {
-		case "x":
+		case "x", "q":
 			m.modal.Hide()
 			return m, nil
 		case "up", "k":
@@ -179,12 +173,6 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 
 	// Handle main UI input
-	// Check for actual ESC key (not ESC sequences like arrow keys)
-	if msg.Type == tea.KeyEsc {
-		m.quitting = true
-		return m, tea.Quit
-	}
-
 	switch msg.String() {
 	case "q", "ctrl+c":
 		m.quitting = true
