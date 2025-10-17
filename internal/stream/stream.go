@@ -181,7 +181,7 @@ func (s *Stream) Name() string {
 }
 
 func (s *Stream) IDHash() string {
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(s.ID)))[:16]
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(s.ID)))[:10]
 }
 
 // Update updates the stream's last seen timestamp
