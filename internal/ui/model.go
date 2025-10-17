@@ -88,7 +88,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		m.table.SetSize(msg.Width, msg.Height-5) // Leave space for header and footer
+		m.table.SetSize(msg.Width, msg.Height-2) // Leave space for header and footer
 
 		// Pass window size to overlay if it exists
 		if m.overlay != nil {
