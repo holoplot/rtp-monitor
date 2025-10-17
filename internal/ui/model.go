@@ -291,7 +291,7 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
-	case "page_up":
+	case "pgup", "page_up":
 		visibleRows := m.table.height - 3
 		for i := 0; i < visibleRows && m.table.selectedIndex > 0; i++ {
 			m.table.selectedIndex--
@@ -299,7 +299,7 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.table.adjustView()
 		return m, nil
 
-	case "page_down":
+	case "pgdown", "page_down":
 		visibleRows := m.table.height - 3
 		maxIndex := len(m.table.streams) - 1
 		for i := 0; i < visibleRows && m.table.selectedIndex < maxIndex; i++ {
