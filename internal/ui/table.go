@@ -249,16 +249,16 @@ func (t *TableModel) calculateColumnWidths() []int {
 
 	// Distribute width proportionally to accommodate primary/secondary IPs
 	// ID: 8%, Name: 25%, Address: 35%, Codec: 15%, Method: 8%, Source: 9%
-	idWidth := (availableWidth * 8) / 100
+	idWidth := (availableWidth * 10) / 100
 	nameWidth := (availableWidth * 25) / 100
 	addressWidth := (availableWidth * 35) / 100
 	codecWidth := (availableWidth * 15) / 100
-	methodWidth := (availableWidth * 8) / 100
+	methodWidth := (availableWidth * 6) / 100
 	sourceWidth := (availableWidth * 9) / 100
 
 	// Ensure minimum widths
-	if idWidth < 8 {
-		idWidth = 8
+	if idWidth < 10 {
+		idWidth = 10
 	}
 
 	if nameWidth < 15 {
