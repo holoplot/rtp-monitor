@@ -3,7 +3,6 @@ package ui
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net"
 	"os"
 	"path"
@@ -105,15 +104,19 @@ func (r *RecordModalContent) Init(width, height int) {
 
 		outFile, err := os.Create(fileName)
 		if err != nil {
-			r.err = err
-
-			return
+			rec.err = err
 		}
 
 		rec.file = outFile
 
 		rec.wavEncoder = wav.NewEncoder(outFile, int(r.stream.Description.SampleRate), 32,
 			int(r.stream.Description.ChannelCount), 1)
+
+		r.recordings = append(r.recordings, rec)
+
+		if rec.err != nil {
+			continue
+		}
 
 		go func() {
 			for {
@@ -146,14 +149,12 @@ func (r *RecordModalContent) Init(width, height int) {
 				}
 			}
 		}()
-
-		r.recordings = append(r.recordings, rec)
 	}
 
 	if receiver, err := r.stream.NewRTPReceiver(r.rtpReceiverCallback); err == nil {
 		r.receiver = receiver
 	} else {
-		slog.Error("Failed to create receiver", "error", err)
+		r.err = err
 	}
 }
 
@@ -185,14 +186,20 @@ func (r *RecordModalContent) Close() {
 func (r *RecordModalContent) Content() []string {
 	l := newLineBuffer(lipgloss.NewStyle())
 
+	if r.err != nil {
+		l.p("Error: %s", r.err)
+		return l.lines()
+	}
+
 	l.p("RECORDING ...")
 	l.p("")
 
 	for i, rec := range r.recordings {
 		l.p("Recording %d:", i+1)
 
-		if r.err != nil {
-			l.p("Error: %s", r.err)
+		if rec.err != nil {
+			l.p("  Error: %s", rec.err)
+			l.p("")
 		} else {
 			dur := rec.lastRecordedTime.Sub(r.startTime)
 			l.p("  ├─Channels:       %d", r.stream.Description.ChannelCount)
@@ -206,9 +213,8 @@ func (r *RecordModalContent) Content() []string {
 			l.p("  └─Recorded bytes: %s", units.HumanSize(float64(rec.bytesCounter)))
 			l.p("")
 
-			l.p("Hit ESC to stop")
+			l.p("Hit 'q' to stop")
 		}
-
 	}
 
 	return l.lines()
