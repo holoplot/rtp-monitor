@@ -3,7 +3,7 @@ module github.com/holoplot/rtp-monitor
 go 1.24.6
 
 require (
-	github.com/bluenviron/gortsplib/v5 v5.1.0
+	github.com/bluenviron/gortsplib/v5 v5.1.1
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/x/ansi v0.10.2
@@ -25,7 +25,7 @@ require (
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/bluenviron/mediacommon/v2 v2.5.0 // indirect
+	github.com/bluenviron/mediacommon/v2 v2.5.1 // indirect
 	github.com/charmbracelet/colorprofile v0.3.2 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
@@ -43,7 +43,7 @@ require (
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/pion/logging v0.2.4 // indirect
 	github.com/pion/randutil v0.1.0 // indirect
-	github.com/pion/rtp v1.8.23 // indirect
+	github.com/pion/rtp v1.8.24 // indirect
 	github.com/pion/sdp/v3 v3.0.16 // indirect
 	github.com/pion/srtp/v3 v3.0.8 // indirect
 	github.com/pion/transport/v3 v3.0.8 // indirect
