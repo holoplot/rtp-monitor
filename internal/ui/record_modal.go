@@ -168,15 +168,15 @@ func (r *RecordModalContent) Close() {
 
 	for _, rec := range r.recordings {
 		if rec.wavEncoder != nil {
-			rec.wavEncoder.Close()
+			_ = rec.wavEncoder.Close()
 		}
 
 		if rec.file != nil {
-			rec.file.Close()
+			_ = rec.file.Close()
 
 			// Empty files are worthless, so remove them to avoid confusion
 			if rec.bytesCounter == 0 {
-				os.Remove(rec.file.Name())
+				_ = os.Remove(rec.file.Name())
 			}
 		}
 	}

@@ -166,7 +166,7 @@ func (d *FpgaRxModalContent) Close() {
 	}
 
 	if d.streamDevice != nil {
-		d.streamDevice.Close()
+		_ = d.streamDevice.Close()
 	}
 }
 

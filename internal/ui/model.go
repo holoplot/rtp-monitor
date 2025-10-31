@@ -187,9 +187,9 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 		if m.modal.IsVisible() {
 			s := strings.Join(m.modal.provider.Content(), "\n")
-			clipboard.WriteString(s)
+			_ = clipboard.WriteString(s)
 		} else if selected != nil {
-			clipboard.Write(selected.SDP)
+			_ = clipboard.Write(selected.SDP)
 		}
 
 		return m, nil
