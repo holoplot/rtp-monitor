@@ -54,7 +54,6 @@ type sourceMeters struct {
 
 // channelMeter holds the current state of a VU meter
 type channelMeter struct {
-	maxSample   floatSample
 	levels      *ring.RingBuffer[floatSample]
 	clipTime    time.Time
 	progressBar *VUProgress // VU progress bars for each channel

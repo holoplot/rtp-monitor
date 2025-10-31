@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/holoplot/rtp-monitor/internal/stream"
 	"github.com/pion/rtcp"
 )
@@ -23,8 +22,7 @@ type RTCPModalContent struct {
 	lastUpdate time.Time
 	log        []string
 
-	headerStyle lipgloss.Style
-	height      int
+	height int
 }
 
 func NewRTCPModalContent(stream *stream.Stream) *RTCPModalContent {
