@@ -16,6 +16,10 @@ func NewFpgaRxModalContent(stream *stream.Stream) *FpgaRxModalContent {
 	return &FpgaRxModalContent{}
 }
 
+func FpgaRxModalContentAvailable() bool {
+	return false
+}
+
 func (d *FpgaRxModalContent) Init(_, _ int) {}
 
 func (d *FpgaRxModalContent) Close() {

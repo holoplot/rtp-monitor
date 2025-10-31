@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
 	"sync"
 	"time"
 
@@ -46,6 +47,15 @@ func NewFpgaRxModalContent(stream *stream.Stream) *FpgaRxModalContent {
 
 	return d
 }
+
+func FpgaRxModalContentAvailable() bool {
+	if _, err := os.Stat(streamDeviceName); err == nil {
+		return true
+	}
+
+	return false
+}
+
 func (d *FpgaRxModalContent) Init(width, _ int) {
 	d.lastUpdate = time.Now()
 

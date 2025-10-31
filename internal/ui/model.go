@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"runtime"
 	"strings"
 	"time"
 
@@ -134,10 +133,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func isLinux() bool {
-	return runtime.GOOS == "linux"
-}
-
 // handleKeypress handles keyboard input
 func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Handle modal input first if any modal is visible
@@ -213,7 +208,7 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case "f":
-		if isLinux() {
+		if FpgaRxModalContentAvailable() {
 			// Show FPGA RX modal for selected stream
 			selected := m.table.GetSelected()
 			if selected != nil {
@@ -418,7 +413,7 @@ func (m *Model) renderFooter() string {
 		"d: Details",
 	}
 
-	if isLinux() {
+	if FpgaRxModalContentAvailable() {
 		help = append(help, "f: FPGA RX")
 	}
 
