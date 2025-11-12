@@ -50,6 +50,7 @@ type VUModalStyles struct {
 
 type sourceMeters struct {
 	channelMeters []*channelMeter
+	lastUpdate    time.Time
 }
 
 // channelMeter holds the current state of a VU meter
@@ -70,6 +71,7 @@ func NewVUModalContent(s *stream.Stream) *VUModalContent {
 	for i := range len(s.Description.Sources) {
 		sourceMeter := &sourceMeters{
 			channelMeters: make([]*channelMeter, s.Description.ChannelCount),
+			lastUpdate:    time.Now(),
 		}
 
 		sourceMeter.channelMeters = make([]*channelMeter, s.Description.ChannelCount)
@@ -110,6 +112,7 @@ func (v *VUModalContent) rtpReceiverCallback(sourceIndex int, _ net.Addr, packet
 	}
 
 	channelMeters := v.sourceMeters[sourceIndex].channelMeters
+	v.sourceMeters[sourceIndex].lastUpdate = time.Now()
 
 	sampleFrames, err := v.receiver.ExtractSamples(packet)
 	if err != nil {
@@ -170,6 +173,10 @@ func (v *VUModalContent) renderSourceMeters(sm *sourceMeters, meterWidth int) []
 	lines = append(lines, "")
 
 	for ch, meter := range sm.channelMeters {
+		if time.Since(sm.lastUpdate) > time.Second {
+			meter.levels.Clear()
+		}
+
 		samples := meter.levels.ToSlice()
 		db := math.Inf(-1)
 
