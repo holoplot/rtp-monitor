@@ -1,6 +1,6 @@
 module github.com/holoplot/rtp-monitor
 
-go 1.24.6
+go 1.25.4
 
 require (
 	github.com/bluenviron/gortsplib/v5 v5.1.1

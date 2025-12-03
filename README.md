@@ -61,7 +61,7 @@ The application uses `git describe` to automatically determine version informati
 ```bash
 # Check embedded version info
 ./rtp-monitor version
-# Output: v1.0.0-2-gabcdef0 (commit: abcdef0, built: 2025-09-11 14:30:00 UTC, go: go1.24.6)
+# Output: v0.8-12-ga55f82b-dirty (commit: a55f82b, built: 2025-12-03 09:42:30 UTC, go: go1.25.4 X:nodwarf5)
 
 # Build with custom version (optional)
 make build VERSION=v2.0.0-custom
