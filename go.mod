@@ -3,14 +3,14 @@ module github.com/holoplot/rtp-monitor
 go 1.25.4
 
 require (
-	github.com/bluenviron/gortsplib/v5 v5.2.0
+	github.com/bluenviron/gortsplib/v5 v5.2.1
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/charmbracelet/x/ansi v0.11.2
+	github.com/charmbracelet/x/ansi v0.11.3
 	github.com/docker/go-units v0.5.0
 	github.com/go-audio/audio v1.0.0
 	github.com/go-audio/wav v1.1.0
-	github.com/godbus/dbus/v5 v5.2.0
+	github.com/godbus/dbus/v5 v5.2.1
 	github.com/holoplot/go-avahi v1.0.1
 	github.com/holoplot/go-multicast v0.0.0-20250911190907-ab1df3c58063
 	github.com/holoplot/go-sap v0.0.0-20250907071343-7683e6981e9d
@@ -19,13 +19,13 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.3.0
 	github.com/pion/rtcp v1.2.16
 	github.com/pion/rtp/v2 v2.0.0
-	github.com/rmhubbert/bubbletea-overlay v0.5.3
-	github.com/spf13/cobra v1.10.1
+	github.com/rmhubbert/bubbletea-overlay v0.6.2
+	github.com/spf13/cobra v1.10.2
 )
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/bluenviron/mediacommon/v2 v2.5.1 // indirect
+	github.com/bluenviron/mediacommon/v2 v2.5.2 // indirect
 	github.com/charmbracelet/colorprofile v0.3.3 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.14 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
@@ -45,7 +45,7 @@ require (
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/pion/logging v0.2.4 // indirect
 	github.com/pion/randutil v0.1.0 // indirect
-	github.com/pion/rtp v1.8.25 // indirect
+	github.com/pion/rtp v1.8.26 // indirect
 	github.com/pion/sdp/v3 v3.0.16 // indirect
 	github.com/pion/srtp/v3 v3.0.9 // indirect
 	github.com/pion/transport/v3 v3.1.1 // indirect
