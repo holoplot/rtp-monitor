@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net"
 	"os"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/holoplot/rtp-monitor/internal/ptp"
@@ -20,6 +21,9 @@ var (
 	wavFileFolder  string
 	noSAP          bool
 	noMDNS         bool
+	headless       bool
+	monitorIDs     []string
+	reportInterval time.Duration
 )
 
 var rootCmd = &cobra.Command{
@@ -56,10 +60,18 @@ func init() {
 	rootCmd.Flags().StringVar(&wavFileFolder, "wav", "", "Folder to save WAV files")
 	rootCmd.Flags().BoolVar(&noSAP, "no-sap", false, "Disable SAP discovery")
 	rootCmd.Flags().BoolVar(&noMDNS, "no-mdns", false, "Disable mDNS discovery")
+	rootCmd.Flags().BoolVar(&headless, "headless", false, "Run in headless mode (no UI)")
+	rootCmd.Flags().StringArrayVar(&monitorIDs, "hash", []string{}, "Stream ID hash to monitor in headless mode (can be used multiple times)")
+	rootCmd.Flags().DurationVar(&reportInterval, "report-interval", time.Second, "Report interval for stream monitoring in headless mode")
 }
 
 // run is the main execution function
 func run(cmd *cobra.Command, args []string) error {
+	// Validate headless mode flags
+	if !headless && len(monitorIDs) > 0 {
+		return fmt.Errorf("--monitor-id can only be used with --headless")
+	}
+
 	var ifis []net.Interface
 
 	if len(interfaceNames) > 0 {
@@ -168,6 +180,10 @@ func run(cmd *cobra.Command, args []string) error {
 	ptpMonitor, err := ptp.NewMonitor(multicastIfis)
 	if err != nil {
 		slog.Error("error monitoring PTP - are you root?", "error", err)
+	}
+
+	if headless {
+		return runHeadless(manager, monitorIDs, reportInterval)
 	}
 
 	model := ui.NewModel(manager, ptpMonitor, wavFileFolder)

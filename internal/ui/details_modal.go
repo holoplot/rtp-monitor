@@ -33,8 +33,6 @@ type DetailsModalContent struct {
 type sourceStatistics struct {
 	packetCount      uint64
 	lastPacketCount  uint64
-	lastSequence     uint16
-	sequenceErrors   uint64
 	packetRate       float64
 	lastRTPTimestamp uint32
 	lastPacketTime   time.Time
@@ -74,14 +72,6 @@ func (d *DetailsModalContent) rtpReceiverCallback(sourceIndex int, src net.Addr,
 	stat.lastPacketTime = now
 
 	stat.senders[src.String()] = struct{}{}
-
-	if stat.packetCount > 1 {
-		if packet.SequenceNumber != stat.lastSequence+1 {
-			stat.sequenceErrors++
-		}
-	}
-
-	stat.lastSequence = packet.SequenceNumber
 }
 
 // Init initializes the content provider with dimensions
@@ -160,7 +150,7 @@ func (d *DetailsModalContent) Content() []string {
 			l.p("  ├─ Packets count:   %d", stats.packetCount)
 			l.p("  ├─ Packets rate:    %.2f/s", stats.packetRate)
 			l.p("  ├─ Parsing errors:  %d", d.receiver.RTPErrors(i))
-			l.p("  ├─ Sequence errors: %d", stats.sequenceErrors)
+			l.p("  ├─ Sequence errors: %d", d.receiver.SequenceErrors(i))
 			l.p("  └─ Last timestamp:  %d", stats.lastRTPTimestamp)
 			l.p("")
 		}

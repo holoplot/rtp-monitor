@@ -9,6 +9,7 @@ A Go application for monitoring and tracking the availability of Real-time Trans
 ## Features
 
 - **Terminal User Interface**: Interactive TUI for real-time monitoring
+- **Headless Mode**: Command-line monitoring without UI for automation and logging
 - **Stream Discovery**: Discover streams via mDNS, SAP, or static SDP files
 - **Live VU Meters**: Real-time audio level visualization
 - **RTCP log**: Detailed per-streamRTCP packet analysis
@@ -86,6 +87,22 @@ You can also load SDP files for manual stream configuration:
 ./rtp-monitor --sdp stream1.sdp --sdp stream2.sdp
 ```
 
+### Headless Mode
+
+Run in headless mode for automated monitoring without UI:
+
+```bash
+# Basic headless mode - logs discovered/disappeared streams
+./rtp-monitor --headless
+
+# Monitor specific streams by ID hash with periodic reports
+./rtp-monitor --headless --hash 71cb8481ed --hash 850fab871a
+
+**Note**: `--hash` can only be used with `--headless`. When monitoring specific streams, the application will:
+- Create RTP receivers for each monitored stream
+- Report packet rates and sequence errors periodically
+- Log when monitored streams appear or disappear
+
 ### Command Line Options
 
 ```bash
@@ -93,13 +110,16 @@ Usage:
   rtp-monitor [flags]
 
 Flags:
--h, --help                    help for rtp-monitor
-    --interface stringArray   Network interface to use (can be used multiple times)
-    --no-mdns                 Disable mDNS discovery
-    --no-sap                  Disable SAP discovery
-    --sdp stringArray         SDP file to parse (can be used multiple times)
--v, --version                 version for rtp-monitor
-    --wav string              Folder to save WAV files
+    --headless                   Run in headless mode (no UI)
+-h, --help                       help for rtp-monitor
+    --interface stringArray      Network interface to use (can be used multiple times)
+    --no-mdns                    Disable mDNS discovery
+    --no-sap                     Disable SAP discovery
+    --report-interval duration   Report interval for stream monitoring in headless mode (default 1s)
+    --hash stringArray           Stream ID hash to monitor in headless mode (can be used multiple times)
+    --sdp stringArray            SDP file to parse (can be used multiple times)
+-v, --version                    version for rtp-monitor
+    --wav string                 Folder to save WAV files
 ```
 
 ## Terminal UI Controls

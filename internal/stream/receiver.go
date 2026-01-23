@@ -13,17 +13,23 @@ import (
 type RTPReceiverCallback func(int, net.Addr, *rtp.Packet)
 
 type RTPReceiver struct {
-	mutex     sync.Mutex
-	stream    *Stream
-	consumers []*multicast.Consumer
-	rtpErrors map[int]int
+	mutex          sync.Mutex
+	stream         *Stream
+	consumers      []*multicast.Consumer
+	packetCount    map[int]uint64
+	rtpErrors      map[int]uint64
+	sequenceErrors map[int]uint64
+	lastSequence   map[int]uint16
 }
 
 func (s *Stream) NewRTPReceiver(cb RTPReceiverCallback) (*RTPReceiver, error) {
 	r := &RTPReceiver{
-		stream:    s,
-		consumers: make([]*multicast.Consumer, 0),
-		rtpErrors: make(map[int]int),
+		stream:         s,
+		consumers:      make([]*multicast.Consumer, 0),
+		packetCount:    make(map[int]uint64),
+		rtpErrors:      make(map[int]uint64),
+		sequenceErrors: make(map[int]uint64),
+		lastSequence:   make(map[int]uint16),
 	}
 
 	for i, source := range s.Description.Sources {
@@ -35,12 +41,28 @@ func (s *Stream) NewRTPReceiver(cb RTPReceiverCallback) (*RTPReceiver, error) {
 		c, err := s.manager.multicastListener.AddConsumer(&addr, func(ifi *net.Interface, src net.Addr, payload []byte) {
 			packet := &rtp.Packet{}
 			if err := packet.Unmarshal(payload); err == nil {
-				cb(i, src, packet)
+				r.mutex.Lock()
+
+				r.packetCount[i]++
+
+				if r.packetCount[i] > 1 {
+					if packet.SequenceNumber != r.lastSequence[i]+1 {
+						r.sequenceErrors[i]++
+					}
+				}
+
+				r.lastSequence[i] = packet.SequenceNumber
+
+				r.mutex.Unlock()
+
+				if cb != nil {
+					cb(i, src, packet)
+				}
 			} else {
 				r.mutex.Lock()
-				defer r.mutex.Unlock()
-
 				r.rtpErrors[i]++
+				r.mutex.Unlock()
+
 			}
 		})
 		if err == nil {
@@ -120,11 +142,32 @@ func (r *RTPReceiver) Close() {
 	}
 }
 
-func (r *RTPReceiver) RTPErrors(i int) int {
+func (r *RTPReceiver) NumSources() int {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	return len(r.consumers)
+}
+
+func (r *RTPReceiver) PacketCount(i int) uint64 {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	return r.packetCount[i]
+}
+
+func (r *RTPReceiver) RTPErrors(i int) uint64 {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
 	return r.rtpErrors[i]
+}
+
+func (r *RTPReceiver) SequenceErrors(i int) uint64 {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	return r.sequenceErrors[i]
 }
 
 type RTCPReceiverCallback func(int, net.Addr, rtcp.Packet)
@@ -133,14 +176,14 @@ type RTCPReceiver struct {
 	mutex      sync.Mutex
 	stream     *Stream
 	consumers  []*multicast.Consumer
-	rtcpErrors map[int]int
+	rtcpErrors map[int]uint64
 }
 
 func (s *Stream) NewRTCPReceiver(cb RTCPReceiverCallback) (*RTCPReceiver, error) {
 	r := &RTCPReceiver{
 		stream:     s,
 		consumers:  make([]*multicast.Consumer, 0),
-		rtcpErrors: make(map[int]int),
+		rtcpErrors: make(map[int]uint64),
 	}
 
 	for i, source := range s.Description.Sources {
