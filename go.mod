@@ -19,7 +19,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.3.0
 	github.com/pion/rtcp v1.2.16
 	github.com/pion/rtp/v2 v2.0.0
-	github.com/rmhubbert/bubbletea-overlay v0.6.3
+	github.com/rmhubbert/bubbletea-overlay v0.6.4
 	github.com/spf13/cobra v1.10.2
 )
 
@@ -31,7 +31,7 @@ require (
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/clipperhouse/displaywidth v0.7.0 // indirect
 	github.com/clipperhouse/stringish v0.1.1 // indirect
-	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
+	github.com/clipperhouse/uax29/v2 v2.3.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/go-audio/riff v1.0.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -45,15 +45,15 @@ require (
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/pion/logging v0.2.4 // indirect
 	github.com/pion/randutil v0.1.0 // indirect
-	github.com/pion/rtp v1.9.0 // indirect
+	github.com/pion/rtp v1.10.0 // indirect
 	github.com/pion/sdp/v3 v3.0.17 // indirect
-	github.com/pion/srtp/v3 v3.0.9 // indirect
-	github.com/pion/transport/v3 v3.1.1 // indirect
+	github.com/pion/srtp/v3 v3.0.10 // indirect
+	github.com/pion/transport/v4 v4.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	golang.org/x/net v0.48.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
-	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/net v0.49.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
 )
