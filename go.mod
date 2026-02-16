@@ -19,7 +19,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.3.0
 	github.com/pion/rtcp v1.2.16
 	github.com/pion/rtp/v2 v2.0.0
-	github.com/rmhubbert/bubbletea-overlay v0.6.4
+	github.com/rmhubbert/bubbletea-overlay v0.6.5
 	github.com/spf13/cobra v1.10.2
 )
 

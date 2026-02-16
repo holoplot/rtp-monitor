@@ -90,8 +90,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rivo/uniseg v0.4.7 h1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=
 github.com/rivo/uniseg v0.4.7/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUcx88=
-github.com/rmhubbert/bubbletea-overlay v0.6.4 h1:yD2Y5/W9+jovoj7XIMGEShXDBbSR8bC2RozPgYKLMz0=
-github.com/rmhubbert/bubbletea-overlay v0.6.4/go.mod h1:M3bU+AXxr4wlD/6UZ1UJZWWfTP/iQgsvDAuEz4XpQHk=
+github.com/rmhubbert/bubbletea-overlay v0.6.5 h1:syK4TzrNn5Ef+etHjnuLQO4cBbqR0ZqOvPf4l/fVz2U=
+github.com/rmhubbert/bubbletea-overlay v0.6.5/go.mod h1:EI4cLG6YAA7GIHTKOpf9yYijDEZuI6Iuw/IIIWLaYoo=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/spf13/cobra v1.10.2 h1:DMTTonx5m65Ic0GOoRY2c16WCbHxOOw6xxezuLaBpcU=
 github.com/spf13/cobra v1.10.2/go.mod h1:7C1pvHqHw5A4vrJfjNwvOdzYu0Gml16OCs2GRiTUUS4=
