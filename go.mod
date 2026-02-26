@@ -3,7 +3,7 @@ module github.com/holoplot/rtp-monitor
 go 1.25.4
 
 require (
-	github.com/bluenviron/gortsplib/v5 v5.3.1
+	github.com/bluenviron/gortsplib/v5 v5.3.2
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/x/ansi v0.11.6
@@ -14,7 +14,7 @@ require (
 	github.com/holoplot/go-avahi v1.0.1
 	github.com/holoplot/go-multicast v0.0.0-20250911190907-ab1df3c58063
 	github.com/holoplot/go-sap v0.0.0-20250907071343-7683e6981e9d
-	github.com/holoplot/ravenna-fpga-drivers/go v0.0.0-20260220221345-4aa7e05995ee
+	github.com/holoplot/ravenna-fpga-drivers/go v0.0.0-20260223075340-832fc7ab0552
 	github.com/holoplot/sdp v0.18.3-0.20220210000336-2bb0da759e83
 	github.com/lucasb-eyer/go-colorful v1.3.0
 	github.com/pion/rtcp v1.2.16
@@ -25,11 +25,11 @@ require (
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/bluenviron/mediacommon/v2 v2.7.2 // indirect
+	github.com/bluenviron/mediacommon/v2 v2.8.0 // indirect
 	github.com/charmbracelet/colorprofile v0.4.2 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
-	github.com/clipperhouse/displaywidth v0.10.0 // indirect
+	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/go-audio/riff v1.0.0 // indirect
@@ -52,7 +52,7 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	golang.org/x/net v0.50.0 // indirect
+	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
 )
