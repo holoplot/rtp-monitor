@@ -1,13 +1,9 @@
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
-github.com/bluenviron/gortsplib/v5 v5.3.1 h1:PYqx29mr6C1uzQgUvj2dCCrPn4lieklt/ZOw5nGE75Q=
-github.com/bluenviron/gortsplib/v5 v5.3.1/go.mod h1:pMia36dVdPoRMBxV/T1Z2xYxwI8bFkkd7xc2WM5KsOM=
-github.com/bluenviron/gortsplib/v5 v5.3.2 h1:eGoOsJzV015A+9xuBPcDYNhqYjogH25zXhMoU1lNeXI=
-github.com/bluenviron/gortsplib/v5 v5.3.2/go.mod h1:x2Pn+7CYoASW4jz8O3Ae1cNTcfOoFMjUCGcafN4qzc8=
-github.com/bluenviron/mediacommon/v2 v2.7.2 h1:BA7X7YOKq4VC6Ygm5FIg2D2IYTt/Ud6T43anXkHbDE8=
-github.com/bluenviron/mediacommon/v2 v2.7.2/go.mod h1:5V15TiOfeaNVmZPVuOqAwqQSWyvMV86/dijDKu5q9Zs=
-github.com/bluenviron/mediacommon/v2 v2.8.0 h1:sacjx0Jwdl44awqN5jQhpm7LgVmDKf881hRqL9/fNgQ=
-github.com/bluenviron/mediacommon/v2 v2.8.0/go.mod h1:D63vIFWAgTIo0OLsk9EVKVH4yrs8AKHlNqjzVsBTMwc=
+github.com/bluenviron/gortsplib/v5 v5.4.0 h1:xi9G4NU67+5uNxGZzJP87SwyaWKr+rUAzbIkOE2SQBo=
+github.com/bluenviron/gortsplib/v5 v5.4.0/go.mod h1:+vGoi2RqF8LA7ktls7nC0JIF3DmOHwj0448kdQGYBEQ=
+github.com/bluenviron/mediacommon/v2 v2.8.1 h1:UfR+AxqpL9fl5+KeT5BGklBfWgKS0OaSA7LsL8eVYS8=
+github.com/bluenviron/mediacommon/v2 v2.8.1/go.mod h1:4AsE74EnTxkHeUs1VMER31fivU0jufZUAepaKFRV1lM=
 github.com/charmbracelet/bubbletea v1.3.10 h1:otUDHWMMzQSB0Pkc87rm691KZ3SWa4KUlvF9nRvCICw=
 github.com/charmbracelet/bubbletea v1.3.10/go.mod h1:ORQfo0fk8U+po9VaNvnV95UPWA1BitP1E0N6xJPlHr4=
 github.com/charmbracelet/colorprofile v0.4.2 h1:BdSNuMjRbotnxHSfxy+PCSa4xAmz7szw70ktAtWRYrY=
@@ -20,8 +16,6 @@ github.com/charmbracelet/x/cellbuf v0.0.15 h1:ur3pZy0o6z/R7EylET877CBxaiE1Sp1GMx
 github.com/charmbracelet/x/cellbuf v0.0.15/go.mod h1:J1YVbR7MUuEGIFPCaaZ96KDl5NoS0DAWkskup+mOY+Q=
 github.com/charmbracelet/x/term v0.2.2 h1:xVRT/S2ZcKdhhOuSP4t5cLi5o+JxklsoEObBSgfgZRk=
 github.com/charmbracelet/x/term v0.2.2/go.mod h1:kF8CY5RddLWrsgVwpw4kAa6TESp6EB5y3uxGLeCqzAI=
-github.com/clipperhouse/displaywidth v0.10.0 h1:GhBG8WuerxjFQQYeuZAeVTuyxuX+UraiZGD4HJQ3Y8g=
-github.com/clipperhouse/displaywidth v0.10.0/go.mod h1:XqJajYsaiEwkxOj4bowCTMcT1SgvHo9flfF3jQasdbs=
 github.com/clipperhouse/displaywidth v0.11.0 h1:lBc6kY44VFw+TDx4I8opi/EtL9m20WSEFgwIwO+UVM8=
 github.com/clipperhouse/displaywidth v0.11.0/go.mod h1:bkrFNkf81G8HyVqmKGxsPufD3JhNl3dSqnGhOoSD/o0=
 github.com/clipperhouse/uax29/v2 v2.7.0 h1:+gs4oBZ2gPfVrKPthwbMzWZDaAFPGYK72F0NJv2v7Vk=
@@ -52,8 +46,6 @@ github.com/holoplot/go-multicast v0.0.0-20250911190907-ab1df3c58063 h1:h2OFls0mF
 github.com/holoplot/go-multicast v0.0.0-20250911190907-ab1df3c58063/go.mod h1:69D70nBT3OklGIFHeDSRmmdXiuM270T6Yh2rLAZhc9c=
 github.com/holoplot/go-sap v0.0.0-20250907071343-7683e6981e9d h1:pPEGrnUSiR9K0kMRtNnMBcd+WIL+yWRsTZj1aGG2XBc=
 github.com/holoplot/go-sap v0.0.0-20250907071343-7683e6981e9d/go.mod h1:hAZlab9mkgSheS5GsMcXDqLK+DCYtEyd2/WA0LhaCK4=
-github.com/holoplot/ravenna-fpga-drivers/go v0.0.0-20260220221345-4aa7e05995ee h1:i0ybwekKXFJowpd/vlCbmtU1A/q3NqIk0MYUG+lwap8=
-github.com/holoplot/ravenna-fpga-drivers/go v0.0.0-20260220221345-4aa7e05995ee/go.mod h1:mLX/9AYAm7Bfphyt2ZfeoU+JGtHQ4K8MQA0v4OUpERo=
 github.com/holoplot/ravenna-fpga-drivers/go v0.0.0-20260223075340-832fc7ab0552 h1:8cHHODt+2HPizBzj8h41hjzgeM36S26hz+70jBieEkU=
 github.com/holoplot/ravenna-fpga-drivers/go v0.0.0-20260223075340-832fc7ab0552/go.mod h1:mLX/9AYAm7Bfphyt2ZfeoU+JGtHQ4K8MQA0v4OUpERo=
 github.com/holoplot/sdp v0.18.3-0.20220210000336-2bb0da759e83 h1:PYj2zODu5Nvj5mIHLczmbzlVnnbfQJkRdc4INz0tacU=
@@ -111,8 +103,6 @@ github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e/go.mod h1:RbqR21r5mrJu
 go.yaml.in/yaml/v3 v3.0.4/go.mod h1:DhzuOOF2ATzADvBadXxruRBLzYTpT36CKvDb3+aBEFg=
 golang.org/x/exp v0.0.0-20231006140011-7918f672742d h1:jtJma62tbqLibJ5sFQz8bKtEM8rJBtfilJ2qTU199MI=
 golang.org/x/exp v0.0.0-20231006140011-7918f672742d/go.mod h1:ldy0pHrwJyGW56pPQzzkH36rKxoZW1tw7ZJpeKx+hdo=
-golang.org/x/net v0.50.0 h1:ucWh9eiCGyDR3vtzso0WMQinm2Dnt8cFMuQa9K33J60=
-golang.org/x/net v0.50.0/go.mod h1:UgoSli3F/pBgdJBHCTc+tp3gmrU4XswgGRgtnwWTfyM=
 golang.org/x/net v0.51.0 h1:94R/GTO7mt3/4wIKpcR5gkGmRLOuE/2hNGeWq/GBIFo=
 golang.org/x/net v0.51.0/go.mod h1:aamm+2QF5ogm02fjy5Bb7CQ0WMt1/WVM7FtyaTLlA9Y=
 golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
