@@ -16,7 +16,7 @@ require (
 	github.com/holoplot/go-sap v0.0.0-20250907071343-7683e6981e9d
 	github.com/holoplot/ravenna-fpga-drivers/go v0.0.0-20260311151639-30bb97f07665
 	github.com/holoplot/sdp v0.18.3-0.20220210000336-2bb0da759e83
-	github.com/lucasb-eyer/go-colorful v1.3.0
+	github.com/lucasb-eyer/go-colorful v1.4.0
 	github.com/pion/rtcp v1.2.16
 	github.com/pion/rtp/v2 v2.0.0
 	github.com/rmhubbert/bubbletea-overlay v0.6.6
