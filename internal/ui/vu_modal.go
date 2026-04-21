@@ -122,9 +122,7 @@ func (v *VUModalContent) rtpReceiverCallback(sourceIndex int, _ net.Addr, packet
 	for _, frame := range sampleFrames {
 		for ch, value := range frame {
 			s := floatSample(int32(value)) / floatSample(math.MaxInt32)
-			s = floatSample(math.Abs(float64(s)))
-
-			channelMeters[ch].levels.Push(s)
+			channelMeters[ch].levels.Push(s * s)
 		}
 	}
 }
@@ -181,21 +179,21 @@ func (v *VUModalContent) renderSourceMeters(sm *sourceMeters, meterWidth int) []
 		db := math.Inf(-1)
 
 		if len(samples) > 0 {
-			avg := floatSample(0)
+			sumSquares := floatSample(0)
 
 			for _, sample := range samples {
-				avg += sample
+				sumSquares += sample
 			}
 
-			avg /= floatSample(len(samples))
-			db = math.Log10(float64(avg)) * 20
+			meanSquares := sumSquares / floatSample(len(samples))
+			db = 10 * math.Log10(float64(meanSquares))
 
 			if db > clipThreshold {
 				meter.clipTime = time.Now()
 			}
 
 			if math.IsNaN(db) {
-				panic(fmt.Sprintf("NaN encountered in channel %d, len(samples)=%d, avg=%f samples=%v", ch+1, len(samples), avg, samples))
+				panic(fmt.Sprintf("NaN encountered in channel %d, len(samples)=%d, meanSquares=%f samples=%v", ch+1, len(samples), meanSquares, samples))
 			}
 		}
 
