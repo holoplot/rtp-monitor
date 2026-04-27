@@ -3,7 +3,7 @@ module github.com/holoplot/rtp-monitor
 go 1.25.4
 
 require (
-	github.com/bluenviron/gortsplib/v5 v5.5.1
+	github.com/bluenviron/gortsplib/v5 v5.5.2
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/x/ansi v0.11.7
