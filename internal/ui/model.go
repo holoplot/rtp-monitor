@@ -222,15 +222,15 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
-	case "v":
-		// Show VU meters modal for selected stream
+	case "m":
+		// Show meters modal for selected stream
 		selected := m.table.GetSelected()
 		if selected != nil {
 			if m.modal.IsVisible() {
 				m.modal.Hide()
 			}
-			vuProvider := NewVUModalContent(selected)
-			m.modal.Show(selected, vuProvider, m.width, m.height)
+			meterProvider := NewMeterModalContent(selected)
+			m.modal.Show(selected, meterProvider, m.width, m.height)
 			return m, m.modalTickCmd() // Start updates immediately
 		}
 		return m, nil
@@ -421,7 +421,7 @@ func (m *Model) renderFooter() string {
 		"r: RTCP",
 		"R: Record wav",
 		"s: SDP",
-		"v: VU Meters",
+		"m: Metering",
 		"q: Quit",
 	}...)
 

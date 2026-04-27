@@ -19,17 +19,17 @@ import (
 type floatSample float64
 
 const (
-	clipThreshold = -1 // dBFS
+	clipThreshold = -0.1 // dBFS
 	clipTimeout   = time.Second * 5
 )
 
-// VUModalContent implements ModalContentProvider for VU meter display
-type VUModalContent struct {
+// MeterModalContent implements ModalContentProvider for Meter meter display
+type MeterModalContent struct {
 	mutex sync.Mutex
 
 	width        int
 	height       int
-	styles       VUModalStyles
+	styles       MeterModalStyles
 	contentWidth int
 
 	stream   *stream.Stream
@@ -40,8 +40,8 @@ type VUModalContent struct {
 	sourceMeters []*sourceMeters
 }
 
-// VUModalStyles holds the styling for the VU modal content
-type VUModalStyles struct {
+// MeterModalStyles holds the styling for the Meter modal content
+type MeterModalStyles struct {
 	StreamName lipgloss.Style
 	MeterClip  lipgloss.Style
 	ScaleLabel lipgloss.Style
@@ -53,18 +53,18 @@ type sourceMeters struct {
 	lastUpdate    time.Time
 }
 
-// channelMeter holds the current state of a VU meter
+// channelMeter holds the current state of a meter channel
 type channelMeter struct {
 	levels      *ring.RingBuffer[floatSample]
 	clipTime    time.Time
-	progressBar *VUProgress // VU progress bars for each channel
+	progressBar *MeterProgress
 }
 
-// NewVUModalContent creates a new VU modal content provider
-func NewVUModalContent(s *stream.Stream) *VUModalContent {
-	v := &VUModalContent{
+// NewMeterModalContent creates a new Meter modal content provider
+func NewMeterModalContent(s *stream.Stream) *MeterModalContent {
+	v := &MeterModalContent{
 		stream:       s,
-		styles:       createVUModalStyles(),
+		styles:       createMeterModalStyles(),
 		sourceMeters: make([]*sourceMeters, len(s.Description.Sources)),
 	}
 
@@ -78,8 +78,8 @@ func NewVUModalContent(s *stream.Stream) *VUModalContent {
 
 		for i := range s.Description.ChannelCount {
 			sourceMeter.channelMeters[i] = &channelMeter{
-				levels:      ring.NewRingBuffer[floatSample](10000),
-				progressBar: NewVUProgress(50, v.styles.Background), // Default width
+				levels:      ring.NewRingBuffer[floatSample](2400),
+				progressBar: NewMeterProgress(50, v.styles.Background), // Default width
 			}
 		}
 
@@ -89,9 +89,9 @@ func NewVUModalContent(s *stream.Stream) *VUModalContent {
 	return v
 }
 
-// createVUModalStyles creates the VU modal styles
-func createVUModalStyles() VUModalStyles {
-	return VUModalStyles{
+// createMeterModalStyles creates the Meter modal styles
+func createMeterModalStyles() MeterModalStyles {
+	return MeterModalStyles{
 		StreamName: lipgloss.NewStyle().
 			Foreground(theme.Colors.Secondary).
 			Bold(true).
@@ -106,7 +106,7 @@ func createVUModalStyles() VUModalStyles {
 	}
 }
 
-func (v *VUModalContent) rtpReceiverCallback(sourceIndex int, _ net.Addr, packet *rtp.Packet) {
+func (v *MeterModalContent) rtpReceiverCallback(sourceIndex int, _ net.Addr, packet *rtp.Packet) {
 	if sourceIndex >= len(v.sourceMeters) {
 		panic(fmt.Sprintf("source %d out of range", sourceIndex))
 	}
@@ -128,7 +128,7 @@ func (v *VUModalContent) rtpReceiverCallback(sourceIndex int, _ net.Addr, packet
 }
 
 // Init initializes the content provider with dimensions
-func (v *VUModalContent) Init(width, height int) {
+func (v *MeterModalContent) Init(width, height int) {
 	v.width = width
 	v.height = height
 
@@ -149,7 +149,7 @@ func (v *VUModalContent) Init(width, height int) {
 	}
 }
 
-func (v *VUModalContent) Close() {
+func (v *MeterModalContent) Close() {
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
 
@@ -158,7 +158,7 @@ func (v *VUModalContent) Close() {
 	}
 }
 
-func (v *VUModalContent) renderSourceMeters(sm *sourceMeters, meterWidth int) []string {
+func (v *MeterModalContent) renderSourceMeters(sm *sourceMeters, meterWidth int) []string {
 	if len(sm.channelMeters) == 0 {
 		return []string{"No meter data available"}
 	}
@@ -176,32 +176,38 @@ func (v *VUModalContent) renderSourceMeters(sm *sourceMeters, meterWidth int) []
 		}
 
 		samples := meter.levels.ToSlice()
-		db := math.Inf(-1)
+		rmsDB := math.Inf(-1)
+		peakDB := math.Inf(-1)
 
 		if len(samples) > 0 {
 			sumSquares := floatSample(0)
+			peakSquared := floatSample(0)
 
 			for _, sample := range samples {
 				sumSquares += sample
+				if sample > peakSquared {
+					peakSquared = sample
+				}
 			}
 
 			meanSquares := sumSquares / floatSample(len(samples))
-			db = 10 * math.Log10(float64(meanSquares))
+			rmsDB = 10 * math.Log10(float64(meanSquares))
+			peakDB = 10 * math.Log10(float64(peakSquared))
 
-			if db > clipThreshold {
-				meter.clipTime = time.Now()
+			if math.IsNaN(rmsDB) {
+				panic(fmt.Sprintf("NaN encountered in channel %d, len(samples)=%d, meanSquares=%f samples=%v", ch+1, len(samples), meanSquares, samples))
 			}
 
-			if math.IsNaN(db) {
-				panic(fmt.Sprintf("NaN encountered in channel %d, len(samples)=%d, meanSquares=%f samples=%v", ch+1, len(samples), meanSquares, samples))
+			if peakDB > clipThreshold {
+				meter.clipTime = time.Now()
 			}
 		}
 
 		clipping := time.Since(meter.clipTime) < clipTimeout
 
 		channelLabel := fmt.Sprintf("Ch%d", ch+1)
-		dbText := fmt.Sprintf("%6.1f dB", db)
-		meterLine := v.renderVUMeter(meter, db, meterWidth)
+		dbText := fmt.Sprintf("%6.1f dB", rmsDB)
+		meterLine := v.renderMeterMeter(meter, peakDB, rmsDB, meterWidth)
 		clipIndicator := v.renderClipIndicator(clipping)
 
 		line := fmt.Sprintf("  %-3s %s %s %s", channelLabel, dbText, meterLine, clipIndicator)
@@ -215,7 +221,7 @@ func (v *VUModalContent) renderSourceMeters(sm *sourceMeters, meterWidth int) []
 }
 
 // Content returns the content lines to be displayed
-func (v *VUModalContent) Content() []string {
+func (v *MeterModalContent) Content() []string {
 	var lines []string
 
 	// Calculate meter width: total width minus labels, dB text, and clip indicator
@@ -244,27 +250,27 @@ func (v *VUModalContent) Content() []string {
 }
 
 // Title returns the modal title
-func (v *VUModalContent) Title() string {
-	return "VU METERS"
+func (v *MeterModalContent) Title() string {
+	return "METERS"
 }
 
 // UpdateInterval returns how often the modal content should be updated
-func (v *VUModalContent) UpdateInterval() time.Duration {
-	// Update VU meters frequently for smooth animation
+func (v *MeterModalContent) UpdateInterval() time.Duration {
+	// Update Meter meters frequently for smooth animation
 	return 50 * time.Millisecond
 }
 
 // AutoScroll returns whether the modal should automatically scroll to the bottom
-func (v *VUModalContent) AutoScroll() bool {
+func (v *MeterModalContent) AutoScroll() bool {
 	return false
 }
 
-// Update is called periodically to refresh VU meter data
-func (v *VUModalContent) Update() {
+// Update is called periodically to refresh Meter meter data
+func (v *MeterModalContent) Update() {
 }
 
 // renderDBScale renders the dB scale at the top
-func (v *VUModalContent) renderDBScale(width int) string {
+func (v *MeterModalContent) renderDBScale(width int) string {
 	markers := []float64{-100, -80, -60, -40, -20, -10, -6, -3, 0}
 	scale := strings.Repeat(" ", width)
 	scaleRunes := []rune(scale)
@@ -296,20 +302,19 @@ func (v *VUModalContent) renderDBScale(width int) string {
 	return string(scaleRunes)
 }
 
-// renderVUMeter renders a single VU meter using progress component
-func (v *VUModalContent) renderVUMeter(meter *channelMeter, level float64, width int) string {
+// renderMeterMeter renders a meter bar showing peak extent with an RMS marker
+func (v *MeterModalContent) renderMeterMeter(meter *channelMeter, peakDB, rmsDB float64, width int) string {
 	if width < 10 {
 		width = 10
 	}
 
 	meter.progressBar.SetWidth(width)
-	percentage := v.dbToPercentage(level)
 
-	return meter.progressBar.ViewAs(percentage)
+	return meter.progressBar.ViewAs(v.dbToPercentage(peakDB), v.dbToPercentage(rmsDB))
 }
 
 // renderClipIndicator renders the clip indicator
-func (v *VUModalContent) renderClipIndicator(clipping bool) string {
+func (v *MeterModalContent) renderClipIndicator(clipping bool) string {
 	s := ""
 
 	if clipping {
@@ -320,7 +325,7 @@ func (v *VUModalContent) renderClipIndicator(clipping bool) string {
 }
 
 // dbToPercentage converts dB value to percentage for progress bar
-func (v *VUModalContent) dbToPercentage(db float64) float64 {
+func (v *MeterModalContent) dbToPercentage(db float64) float64 {
 	// Map -60dB to 0dB to 0.0 to 1.0
 	if db <= -100 {
 		return 0.0
