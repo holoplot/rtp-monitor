@@ -138,7 +138,7 @@ Flags:
 - `f`: Show FPGA RX modal for selected stream (Linux only)
 - `r`: Show RTCP logs for selected stream
 - `R`: Record selected stream to a WAV file
-- `v`: Show live VU meters for selected audio stream
+- `m`: Show live meters for selected audio stream
 - `q`, `Ctrl+C`, or `Esc`: Quit application
 
 ### Modal Details
