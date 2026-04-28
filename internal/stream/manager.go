@@ -42,15 +42,23 @@ type Manager struct {
 
 	sapConsumer *multicast.Consumer
 
-	mDnsStreams map[string]*Stream
+	// mDnsServiceStreams maps an avahi service key to the stream ID it most
+	// recently resolved to, so we can drop the matching mDNS Discovery record
+	// when the service goes away.
+	mDnsServiceStreams map[string]mDnsServiceRef
+}
+
+type mDnsServiceRef struct {
+	streamID string
+	source   string
 }
 
 // NewManager creates a new stream manager
 func NewManager(ifis []*net.Interface) *Manager {
 	m := &Manager{
-		multicastListener: multicast.NewListener(ifis),
-		streams:           make(map[string]*Stream),
-		mDnsStreams:       make(map[string]*Stream),
+		multicastListener:  multicast.NewListener(ifis),
+		streams:            make(map[string]*Stream),
+		mDnsServiceStreams: make(map[string]mDnsServiceRef),
 	}
 
 	go func() {
@@ -182,7 +190,10 @@ func (m *Manager) MonitorMDns() error {
 							}
 
 							m.mutex.Lock()
-							m.mDnsStreams[keyForService(service)] = stream
+							m.mDnsServiceStreams[keyForService(service)] = mDnsServiceRef{
+								streamID: stream.ID,
+								source:   ifiName,
+							}
 							m.mutex.Unlock()
 
 							return
@@ -198,14 +209,24 @@ func (m *Manager) MonitorMDns() error {
 					return
 				}
 
+				key := keyForService(avahiService)
+
 				m.mutex.Lock()
-				if stream, ok := m.mDnsStreams[keyForService(avahiService)]; ok {
-					delete(m.mDnsStreams, keyForService(avahiService))
-					delete(m.streams, stream.ID)
+				ref, ok := m.mDnsServiceStreams[key]
+				if ok {
+					delete(m.mDnsServiceStreams, key)
+					if stream, exists := m.streams[ref.streamID]; exists {
+						stream.RemoveDiscovery(DiscoveryMethodMDNS, ref.source)
+						if len(stream.Discoveries) == 0 {
+							delete(m.streams, stream.ID)
+						}
+					}
 				}
 				m.mutex.Unlock()
 
-				m.update()
+				if ok {
+					m.update()
+				}
 			}
 		}
 	}()
@@ -259,33 +280,40 @@ func (m *Manager) LoadSDPFile(filename string) error {
 	return nil
 }
 
-// AddStream adds a new stream to the manager
-func (m *Manager) AddStream(stream *Stream) {
-	m.mutex.Lock()
-	stream.manager = m
-	m.streams[stream.ID] = stream
-	m.mutex.Unlock()
-
-	m.update()
-}
-
-func (m *Manager) AddStreamFromSDP(sdp []byte, discoveryMethod DiscoveryMethod, interfaceName string) (*Stream, error) {
+func (m *Manager) AddStreamFromSDP(sdp []byte, discoveryMethod DiscoveryMethod, source string) (*Stream, error) {
 	description, uniqueID, err := ParseSDP(sdp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse SDP: %w", err)
 	}
 
-	stream := &Stream{
-		ID:              fmt.Sprintf("%s @%s", uniqueID, interfaceName),
-		Description:     *description,
-		SDP:             sdp,
-		DiscoveryMethod: discoveryMethod,
-		DiscoverySource: interfaceName,
-		LastSeen:        time.Now(),
+	m.mutex.Lock()
+
+	if existing, ok := m.streams[uniqueID]; ok {
+		// Refresh the existing stream and add or refresh this discovery record.
+		existing.Description = *description
+		existing.SDP = sdp
+		existing.AddOrRefreshDiscovery(discoveryMethod, source)
+		m.mutex.Unlock()
+
+		m.update()
+		return existing, nil
 	}
 
-	m.AddStream(stream)
+	stream := &Stream{
+		ID:          uniqueID,
+		Description: *description,
+		SDP:         sdp,
+		Discoveries: []Discovery{{
+			Method:   discoveryMethod,
+			Source:   source,
+			LastSeen: time.Now(),
+		}},
+		manager: m,
+	}
+	m.streams[uniqueID] = stream
+	m.mutex.Unlock()
 
+	m.update()
 	return stream, nil
 }
 
@@ -320,14 +348,27 @@ func (m *Manager) GetAllStreams() []*Stream {
 	return streams
 }
 
-// CleanupStaleStreams removes streams that haven't been seen for a while
+// cleanupStaleStreams expires individual SAP discovery records after sapTimeout
+// of silence and drops a stream entirely once it has no remaining discoveries.
+// mDNS records are removed via the avahi remove channel; manual records never
+// expire.
 func (m *Manager) cleanupStaleStreams() {
 	m.mutex.Lock()
 
+	now := time.Now()
 	removed := false
 
 	for id, stream := range m.streams {
-		if stream.DiscoveryMethod == DiscoveryMethodSAP && stream.IsStale(sapTimeout) {
+		kept := stream.Discoveries[:0]
+		for _, d := range stream.Discoveries {
+			if d.Method == DiscoveryMethodSAP && now.Sub(d.LastSeen) > sapTimeout {
+				removed = true
+				continue
+			}
+			kept = append(kept, d)
+		}
+		stream.Discoveries = kept
+		if len(stream.Discoveries) == 0 {
 			delete(m.streams, id)
 			removed = true
 		}

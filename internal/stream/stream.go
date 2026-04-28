@@ -159,6 +159,19 @@ func ParseSDP(b []byte) (*StreamDescription, string, error) {
 	return sd, uniqueID, nil
 }
 
+// Discovery records one way a stream has been discovered. A single stream may
+// be discovered through multiple methods or on multiple interfaces; each
+// (method, source) tuple gets its own Discovery entry.
+type Discovery struct {
+	Method DiscoveryMethod
+	Source string
+	// LastSeen is the timestamp of the most recent advertisement. Only the
+	// SAP path refreshes this periodically, so cleanup and "last seen"
+	// reporting only apply to DiscoveryMethodSAP. For mDNS and Manual this
+	// is the time the discovery was first added.
+	LastSeen time.Time
+}
+
 // Stream represents an RTP stream with its metadata
 type Stream struct {
 	ID          string
@@ -166,12 +179,8 @@ type Stream struct {
 
 	SDP []byte
 
-	// Stream status
-	LastSeen time.Time
-
-	// Discovery method
-	DiscoveryMethod DiscoveryMethod
-	DiscoverySource string
+	// All discovery records for this stream, in the order they were first seen.
+	Discoveries []Discovery
 
 	manager *Manager
 }
@@ -184,14 +193,54 @@ func (s *Stream) IDHash() string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(s.ID)))[:10]
 }
 
-// Update updates the stream's last seen timestamp
-func (s *Stream) Update() {
-	s.LastSeen = time.Now()
+// findDiscovery returns the index of a matching (method, source) record, or -1.
+func (s *Stream) findDiscovery(method DiscoveryMethod, source string) int {
+	for i, d := range s.Discoveries {
+		if d.Method == method && d.Source == source {
+			return i
+		}
+	}
+	return -1
 }
 
-// IsStale returns true if the stream hasn't been seen for more than the given duration
-func (s *Stream) IsStale(maxAge time.Duration) bool {
-	return time.Since(s.LastSeen) > maxAge
+// AddOrRefreshDiscovery appends a new discovery record or refreshes an existing
+// one's LastSeen timestamp. Returns true if a new record was added.
+func (s *Stream) AddOrRefreshDiscovery(method DiscoveryMethod, source string) bool {
+	now := time.Now()
+	if i := s.findDiscovery(method, source); i >= 0 {
+		s.Discoveries[i].LastSeen = now
+		return false
+	}
+	s.Discoveries = append(s.Discoveries, Discovery{
+		Method:   method,
+		Source:   source,
+		LastSeen: now,
+	})
+	return true
+}
+
+// RemoveDiscovery removes a (method, source) record. Returns true if removed.
+func (s *Stream) RemoveDiscovery(method DiscoveryMethod, source string) bool {
+	i := s.findDiscovery(method, source)
+	if i < 0 {
+		return false
+	}
+	s.Discoveries = append(s.Discoveries[:i], s.Discoveries[i+1:]...)
+	return true
+}
+
+// DiscoveryLabel returns a compact one-line representation of all discoveries,
+// e.g. "mDNS@eth0, SAP@eth1".
+func (s *Stream) DiscoveryLabel() string {
+	parts := make([]string, 0, len(s.Discoveries))
+	for _, d := range s.Discoveries {
+		if d.Source == "" {
+			parts = append(parts, d.Method.String())
+		} else {
+			parts = append(parts, fmt.Sprintf("%s@%s", d.Method, d.Source))
+		}
+	}
+	return strings.Join(parts, ", ")
 }
 
 // Address returns the formatted network address

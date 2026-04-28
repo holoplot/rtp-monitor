@@ -102,9 +102,29 @@ func (d *DetailsModalContent) Content() []string {
 	l.p("Basic Information")
 	l.p("  ├─ ID:               %s", s.ID)
 	l.p("  ├─ ID hash:          %s", s.IDHash())
-	l.p("  ├─ Name:             %s", s.Name())
-	l.p("  ├─ Discovery Method: %s", s.DiscoveryMethod)
-	l.p("  └─ Discovery Source: %s", s.DiscoverySource)
+	l.p("  └─ Name:             %s", s.Name())
+	l.p("")
+
+	l.p("Discovered via (%d)", len(s.Discoveries))
+	for i, d := range s.Discoveries {
+		branch := "├─"
+		if i == len(s.Discoveries)-1 {
+			branch = "└─"
+		}
+		source := d.Source
+		if source == "" {
+			source = "-"
+		}
+		// Only SAP advertisements are repeated periodically, so "last seen" is
+		// only meaningful there. mDNS and Manual entries are added once and
+		// removed only by an explicit avahi remove event or shutdown.
+		if d.Method == stream.DiscoveryMethodSAP {
+			l.p("  %s %s @ %s   (last seen %s ago)",
+				branch, d.Method, source, time.Since(d.LastSeen).Truncate(time.Second))
+		} else {
+			l.p("  %s %s @ %s", branch, d.Method, source)
+		}
+	}
 	l.p("")
 
 	l.p("Stream Information")
