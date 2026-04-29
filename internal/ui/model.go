@@ -159,7 +159,7 @@ func (m *Model) handleKeypress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "end":
 			m.modal.ScrollToBottom()
 			return m, nil
-		case "c", "d", "f", "v", "r", "R", "s":
+		case "c", "d", "f", "m", "r", "R", "s":
 			// Allow modal switching - fall through to main keypress handling
 		default:
 			// For any other keys when modal is open, consume the input
