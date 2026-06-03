@@ -161,10 +161,9 @@ func (m *ModalModel) ScrollDown() {
 
 // ScrollPageUp scrolls up by one page
 func (m *ModalModel) ScrollPageUp() {
-	contentHeight := m.height - 8 // Account for modal padding, header, and borders
-	if contentHeight < 1 {
-		contentHeight = 1
-	}
+	contentHeight := max(
+		// Account for modal padding, header, and borders
+		m.height-8, 1)
 
 	m.scrollOffset -= contentHeight
 	if m.scrollOffset < 0 {
@@ -174,10 +173,9 @@ func (m *ModalModel) ScrollPageUp() {
 
 // ScrollPageDown scrolls down by one page
 func (m *ModalModel) ScrollPageDown() {
-	contentHeight := m.height - 8 // Account for modal padding, header, and borders
-	if contentHeight < 1 {
-		contentHeight = 1
-	}
+	contentHeight := max(
+		// Account for modal padding, header, and borders
+		m.height-8, 1)
 
 	maxScroll := m.getMaxScroll()
 	m.scrollOffset += contentHeight
@@ -216,18 +214,12 @@ func (m *ModalModel) UpdateContent() {
 // getModalDimensions returns consistent modal and content dimensions
 func (m *ModalModel) getModalDimensions() (modalWidth, modalHeight, contentWidth, contentHeight int) {
 	// Calculate modal dimensions (80% of screen, but at least 60x20)
-	modalWidth = (m.width * 80) / 100
-	if modalWidth < 60 {
-		modalWidth = 60
-	}
+	modalWidth = max((m.width*80)/100, 60)
 	if modalWidth > m.width-4 {
 		modalWidth = m.width - 4
 	}
 
-	modalHeight = (m.height * 80) / 100
-	if modalHeight < 20 {
-		modalHeight = 20
-	}
+	modalHeight = max((m.height*80)/100, 20)
 	if modalHeight > m.height-4 {
 		modalHeight = m.height - 4
 	}
@@ -244,12 +236,10 @@ func (m *ModalModel) getScrollableContentDimensions() (availableWidth, available
 	_, _, contentWidth, contentHeight := m.getModalDimensions()
 
 	// Account for title line and scrollbar
-	availableWidth = contentWidth - 2   // Account for scrollbar
-	availableHeight = contentHeight - 1 // Account for title line
-
-	if availableHeight < 1 {
-		availableHeight = 1
-	}
+	availableWidth = contentWidth - 2 // Account for scrollbar
+	availableHeight = max(
+		// Account for title line
+		contentHeight-1, 1)
 
 	return availableWidth, availableHeight
 }
@@ -266,10 +256,7 @@ func (m *ModalModel) getMaxScroll() int {
 	// Calculate actual rendered lines accounting for wrapping
 	totalRenderedLines := len(contentLines)
 
-	maxScroll := totalRenderedLines - availableHeight
-	if maxScroll < 0 {
-		maxScroll = 0
-	}
+	maxScroll := max(totalRenderedLines-availableHeight, 0)
 	return maxScroll
 }
 
@@ -391,10 +378,7 @@ func (m *ModalModel) getVisibleLines(contentLines []string, maxLines int) []stri
 	end := start + maxLines
 
 	if start >= len(contentLines) {
-		start = len(contentLines) - 1
-		if start < 0 {
-			start = 0
-		}
+		start = max(len(contentLines)-1, 0)
 	}
 	if start < 0 {
 		start = 0
@@ -414,18 +398,12 @@ func (m *ModalModel) addScrollbarToVisibleLines(visibleLines []string, available
 	}
 
 	// Calculate scrollbar properties
-	thumbSize := (visibleHeight * visibleHeight) / totalLines
-	if thumbSize < 1 {
-		thumbSize = 1
-	}
+	thumbSize := max((visibleHeight*visibleHeight)/totalLines, 1)
 	if thumbSize > visibleHeight {
 		thumbSize = visibleHeight
 	}
 
-	maxThumbPos := visibleHeight - thumbSize
-	if maxThumbPos < 0 {
-		maxThumbPos = 0
-	}
+	maxThumbPos := max(visibleHeight-thumbSize, 0)
 
 	// Calculate thumb position based on scroll offset
 	var thumbPos int
@@ -445,10 +423,7 @@ func (m *ModalModel) addScrollbarToVisibleLines(visibleLines []string, available
 
 		// Ensure thumb fits within visible area
 		if thumbPos+thumbSize > visibleHeight {
-			thumbPos = visibleHeight - thumbSize
-			if thumbPos < 0 {
-				thumbPos = 0
-			}
+			thumbPos = max(visibleHeight-thumbSize, 0)
 		}
 	}
 
@@ -472,10 +447,7 @@ func (m *ModalModel) addScrollbarToVisibleLines(visibleLines []string, available
 			visualWidth = availableWidth
 		}
 
-		padding := availableWidth - visualWidth
-		if padding < 0 {
-			padding = 0
-		}
+		padding := max(availableWidth-visualWidth, 0)
 
 		result = append(result, line+strings.Repeat(" ", padding)+scrollChar)
 	}

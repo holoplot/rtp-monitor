@@ -385,10 +385,7 @@ func (m *Model) renderHeader() string {
 	// Create a full-width header with title on left, info on right
 	titleWidth := lipgloss.Width(title)
 	infoWidth := lipgloss.Width(info)
-	padding := m.width - titleWidth - infoWidth
-	if padding < 0 {
-		padding = 0
-	}
+	padding := max(m.width-titleWidth-infoWidth, 0)
 
 	return lipgloss.JoinHorizontal(lipgloss.Bottom,
 		title,

@@ -140,10 +140,9 @@ func (t *TableModel) adjustView() {
 		return
 	}
 
-	visibleRows := t.height - 1 // Account for fixed header
-	if visibleRows < 1 {
-		visibleRows = 1
-	}
+	visibleRows := max(
+		// Account for fixed header
+		t.height-1, 1)
 
 	// Adjust view to keep selected item visible
 	if t.selectedIndex < t.viewStart {
@@ -153,10 +152,7 @@ func (t *TableModel) adjustView() {
 	}
 
 	// Ensure view doesn't go beyond bounds
-	maxViewStart := len(t.streams) - visibleRows
-	if maxViewStart < 0 {
-		maxViewStart = 0
-	}
+	maxViewStart := max(len(t.streams)-visibleRows, 0)
 	if t.viewStart > maxViewStart {
 		t.viewStart = maxViewStart
 	}
@@ -189,10 +185,7 @@ func (t *TableModel) renderScrollableContent() string {
 	var b strings.Builder
 
 	// Calculate visible rows (subtract 1 for the fixed header)
-	visibleRows := t.height - 1
-	if visibleRows < 1 {
-		visibleRows = 1
-	}
+	visibleRows := max(t.height-1, 1)
 
 	// Render actual stream rows first
 	endIndex := min(t.viewStart+visibleRows, len(t.streams))
@@ -235,17 +228,16 @@ func (t *TableModel) renderEmpty() string {
 
 // calculateColumnWidths calculates optimal column widths for the table
 func (t *TableModel) calculateColumnWidths() []int {
-	visibleRows := t.height - 1 // Account for fixed header
-	if visibleRows < 1 {
-		visibleRows = 1
-	}
+	visibleRows := max(
+		// Account for fixed header
+		t.height-1, 1)
 
 	// Always reserve space for scrollbar to prevent layout shifts
-	availableWidth := t.width - 2 // Reserve 2 spaces for scrollbar
-
-	if availableWidth < 60 {
-		availableWidth = 60 // Minimum usable width
-	}
+	availableWidth := max(
+		// Reserve 2 spaces for scrollbar
+		t.width-2,
+		// Minimum usable width
+		60)
 
 	// Distribute width proportionally to accommodate primary/secondary IPs
 	// ID: 10%, Name: 25%, Address: 35%, Codec: 15%, Discovery: 15%
@@ -296,15 +288,13 @@ func (t *TableModel) renderHeader() string {
 	headerLine := lipgloss.JoinHorizontal(lipgloss.Top, headerParts...)
 
 	// Calculate target width based on scrollbar visibility
-	visibleRows := t.height - 1 // Account for fixed header
-	if visibleRows < 1 {
-		visibleRows = 1
-	}
+	visibleRows := max(
+		// Account for fixed header
+		t.height-1, 1)
 	// Ensure we don't exceed actual terminal width
-	targetWidth := t.width - 2 // Always reserve space for scrollbar
-	if targetWidth < 60 {
-		targetWidth = 60
-	}
+	targetWidth := max(
+		// Always reserve space for scrollbar
+		t.width-2, 60)
 
 	// Ensure the header uses correct width
 	headerWidth := lipgloss.Width(headerLine)
@@ -348,15 +338,13 @@ func (t *TableModel) renderRow(index int) string {
 	rowLine := lipgloss.JoinHorizontal(lipgloss.Top, rowParts...)
 
 	// Calculate target width based on scrollbar visibility
-	visibleRows := t.height - 1 // Account for fixed header
-	if visibleRows < 1 {
-		visibleRows = 1
-	}
+	visibleRows := max(
+		// Account for fixed header
+		t.height-1, 1)
 	// Ensure we don't exceed actual terminal width
-	targetWidth := t.width - 2 // Always reserve space for scrollbar
-	if targetWidth < 60 {
-		targetWidth = 60
-	}
+	targetWidth := max(
+		// Always reserve space for scrollbar
+		t.width-2, 60)
 
 	// Ensure the row uses correct width
 	rowWidth := lipgloss.Width(rowLine)

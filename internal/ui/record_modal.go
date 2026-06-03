@@ -77,10 +77,7 @@ func (r *RecordModalContent) Init(width, height int) {
 	r.height = height
 
 	// Calculate content width (90% of screen, similar to original modal)
-	r.contentWidth = (width * 90) / 100
-	if r.contentWidth < 90 {
-		r.contentWidth = 90
-	}
+	r.contentWidth = max((width*90)/100, 90)
 	if r.contentWidth > width-4 {
 		r.contentWidth = width - 4
 	}

@@ -133,10 +133,7 @@ func (v *MeterModalContent) Init(width, height int) {
 	v.height = height
 
 	// Calculate content width (90% of screen, similar to original modal)
-	v.contentWidth = (width * 90) / 100
-	if v.contentWidth < 90 {
-		v.contentWidth = 90
-	}
+	v.contentWidth = max((width*90)/100, 90)
 	if v.contentWidth > width-4 {
 		v.contentWidth = width - 4
 	}
@@ -225,10 +222,7 @@ func (v *MeterModalContent) Content() []string {
 	var lines []string
 
 	// Calculate meter width: total width minus labels, dB text, and clip indicator
-	meterWidth := v.contentWidth - 55
-	if meterWidth < 20 {
-		meterWidth = 20
-	}
+	meterWidth := max(v.contentWidth-55, 20)
 
 	v.mutex.Lock()
 	defer v.mutex.Unlock()
@@ -277,10 +271,7 @@ func (v *MeterModalContent) renderDBScale(width int) string {
 
 	for _, db := range markers {
 		percentage := v.dbToPercentage(db)
-		pos := int(percentage * float64(width))
-		if pos < 0 {
-			pos = 0
-		}
+		pos := max(int(percentage*float64(width)), 0)
 		if pos >= width {
 			pos = width - 1
 		}
