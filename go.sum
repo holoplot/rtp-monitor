@@ -1,9 +1,9 @@
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
-github.com/bluenviron/gortsplib/v5 v5.5.3 h1:aKdP14cRP8CorUCw2K4Qn/Zrs4AXTbAKUENVqh3B3vM=
-github.com/bluenviron/gortsplib/v5 v5.5.3/go.mod h1:e4abL49yJF5TR+1m9+0K+UuCSkyJn345Dt2XIJfu4Nc=
-github.com/bluenviron/mediacommon/v2 v2.8.3 h1:T6xb7ZK3eBixi/HynzhtGRCEIrazwcmGIeu0WDTVISY=
-github.com/bluenviron/mediacommon/v2 v2.8.3/go.mod h1:CsYjGgzIz8RbloQf4BHR4uReogZsB4PEKWfePVIzJv8=
+github.com/bluenviron/gortsplib/v5 v5.5.4 h1:ooXvRBGPmKHCK9yh90MooeZKZMmaZ63nfITCzTo/vS4=
+github.com/bluenviron/gortsplib/v5 v5.5.4/go.mod h1:sT0KqICjZKSpHmx7R3xFRY1tfgP2iMe2bF3i3MxX/jE=
+github.com/bluenviron/mediacommon/v2 v2.9.0 h1:8gBeby10B/qD8ctnesKTHx3pgdsxiZcaQZe+RR6Djx4=
+github.com/bluenviron/mediacommon/v2 v2.9.0/go.mod h1:syqw4j2RmBCKZgUtGFtB/7gcnh1aaX8I3vd24+bgXWc=
 github.com/charmbracelet/bubbletea v1.3.10 h1:otUDHWMMzQSB0Pkc87rm691KZ3SWa4KUlvF9nRvCICw=
 github.com/charmbracelet/bubbletea v1.3.10/go.mod h1:ORQfo0fk8U+po9VaNvnV95UPWA1BitP1E0N6xJPlHr4=
 github.com/charmbracelet/colorprofile v0.4.3 h1:QPa1IWkYI+AOB+fE+mg/5/4HRMZcaXex9t5KX76i20Q=
