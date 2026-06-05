@@ -228,10 +228,6 @@ func (t *TableModel) renderEmpty() string {
 
 // calculateColumnWidths calculates optimal column widths for the table
 func (t *TableModel) calculateColumnWidths() []int {
-	visibleRows := max(
-		// Account for fixed header
-		t.height-1, 1)
-
 	// Always reserve space for scrollbar to prevent layout shifts
 	availableWidth := max(
 		// Reserve 2 spaces for scrollbar
@@ -287,10 +283,6 @@ func (t *TableModel) renderHeader() string {
 
 	headerLine := lipgloss.JoinHorizontal(lipgloss.Top, headerParts...)
 
-	// Calculate target width based on scrollbar visibility
-	visibleRows := max(
-		// Account for fixed header
-		t.height-1, 1)
 	// Ensure we don't exceed actual terminal width
 	targetWidth := max(
 		// Always reserve space for scrollbar
@@ -337,10 +329,6 @@ func (t *TableModel) renderRow(index int) string {
 
 	rowLine := lipgloss.JoinHorizontal(lipgloss.Top, rowParts...)
 
-	// Calculate target width based on scrollbar visibility
-	visibleRows := max(
-		// Account for fixed header
-		t.height-1, 1)
 	// Ensure we don't exceed actual terminal width
 	targetWidth := max(
 		// Always reserve space for scrollbar
