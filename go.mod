@@ -12,9 +12,9 @@ require (
 	github.com/go-audio/wav v1.1.0
 	github.com/godbus/dbus/v5 v5.2.2
 	github.com/holoplot/go-avahi v1.0.1
-	github.com/holoplot/go-multicast v0.0.0-20250911190907-ab1df3c58063
+	github.com/holoplot/go-multicast v0.0.0-20260707094457-65b5fcbdd922
 	github.com/holoplot/go-sap v0.0.0-20260323125409-00b3ab9bed3b
-	github.com/holoplot/ravenna-fpga-drivers/go v0.0.0-20260323131416-6f513946fa04
+	github.com/holoplot/ravenna-fpga-drivers/go v0.0.0-20260707093413-d80d5ce3acdd
 	github.com/holoplot/sdp v0.18.3-0.20220210000336-2bb0da759e83
 	github.com/lucasb-eyer/go-colorful v1.4.0
 	github.com/pion/rtcp v1.2.17
@@ -44,7 +44,7 @@ require (
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/pion/logging v0.2.4 // indirect
 	github.com/pion/randutil v0.1.0 // indirect
-	github.com/pion/rtp v1.10.2 // indirect
+	github.com/pion/rtp v1.10.3 // indirect
 	github.com/pion/sdp/v3 v3.0.19 // indirect
 	github.com/pion/srtp/v3 v3.0.12 // indirect
 	github.com/pion/transport/v4 v4.0.2 // indirect
@@ -54,5 +54,5 @@ require (
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
-	golang.org/x/text v0.38.0 // indirect
+	golang.org/x/text v0.39.0 // indirect
 )
