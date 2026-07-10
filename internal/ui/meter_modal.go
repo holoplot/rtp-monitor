@@ -107,6 +107,11 @@ func createMeterModalStyles() MeterModalStyles {
 }
 
 func (v *MeterModalContent) rtpReceiverCallback(sourceIndex int, _ net.Addr, packet *rtp.Packet) {
+	// The callback might fire before NewRTPReceiver() returns. Just ignore that packet.
+	if v.receiver == nil {
+		return
+	}
+
 	if sourceIndex >= len(v.sourceMeters) {
 		panic(fmt.Sprintf("source %d out of range", sourceIndex))
 	}
