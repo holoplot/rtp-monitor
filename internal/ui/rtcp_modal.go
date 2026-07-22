@@ -35,6 +35,11 @@ func NewRTCPModalContent(stream *stream.Stream) *RTCPModalContent {
 }
 
 func (d *RTCPModalContent) rtpReceiverCallback(sourceIndex int, src net.Addr, pkt rtcp.Packet) {
+	// The callback might fire before NewRTPReceiver() returns. Just ignore that packet.
+	if d.receiver == nil {
+		return
+	}
+
 	now := time.Now()
 
 	var lines []string

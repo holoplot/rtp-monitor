@@ -60,6 +60,11 @@ func NewDetailsModalContent(stream *stream.Stream, ptpMonitor *ptp.Monitor) *Det
 }
 
 func (d *DetailsModalContent) rtpReceiverCallback(sourceIndex int, src net.Addr, packet *rtp.Packet) {
+	// The callback might fire before NewRTPReceiver() returns. Just ignore that packet.
+	if d.receiver == nil {
+		return
+	}
+
 	now := time.Now()
 
 	d.mutex.Lock()

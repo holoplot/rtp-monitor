@@ -59,6 +59,11 @@ func NewRecordModalContent(s *stream.Stream, wavFileFolder string) *RecordModalC
 }
 
 func (r *RecordModalContent) rtpReceiverCallback(sourceIndex int, _ net.Addr, packet *rtp.Packet) {
+	// The callback might fire before NewRTPReceiver() returns. Just ignore that packet.
+	if r.receiver == nil {
+		return
+	}
+
 	sampleFrames, err := r.receiver.ExtractSamples(packet)
 	if err != nil {
 		return
