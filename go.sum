@@ -40,8 +40,8 @@ github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aN
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/holoplot/go-avahi v1.0.1 h1:XcqR2keL4qWRnlxHD5CAOdWpLFZJ+EOUK0vEuylfvvk=
 github.com/holoplot/go-avahi v1.0.1/go.mod h1:qH5psEKb0DK+BRplMfc+RY4VMOlbf6mqfxgpMy6aP0M=
-github.com/holoplot/go-multicast v0.0.0-20260707094457-65b5fcbdd922 h1:5Lc77ZGh5/gim3qjNJvZbZ6tXlOwIyuJ6585pEX1TaA=
-github.com/holoplot/go-multicast v0.0.0-20260707094457-65b5fcbdd922/go.mod h1:wPxr6+cB10c5VQ+m/YlS31pB6DULJ0wHonm0fo/u5a4=
+github.com/holoplot/go-multicast v0.0.0-20260824095630-ca1f86a9666d h1:VjI65UKmydT5kD6KDyNaiWm0UBLcTAOj73w1vrArpmw=
+github.com/holoplot/go-multicast v0.0.0-20260824095630-ca1f86a9666d/go.mod h1:CJJXZoPtDvHwHegkdV0ZclWepDZ0yvJs6UY7DjJTUMo=
 github.com/holoplot/go-sap v0.0.0-20260323125409-00b3ab9bed3b h1:i6a0PDQ5kcGTzTXRNQvFoWHyu+jCu60ol46sNyJtrQE=
 github.com/holoplot/go-sap v0.0.0-20260323125409-00b3ab9bed3b/go.mod h1:85ngIP1X9rrt32Szggp6tEynD4grZIs8a+ZH7FHlXYg=
 github.com/holoplot/ravenna-fpga-drivers/go v0.0.0-20260707093413-d80d5ce3acdd h1:ep1c/aYcwK7X3UkQl7Ay4S/lzho3HXGt37B26cpanG8=
