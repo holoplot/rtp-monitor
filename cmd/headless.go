@@ -44,7 +44,9 @@ func runHeadless(manager *stream.Manager, monitorIDHashes []string, reportInterv
 
 				// Start monitoring if this stream ID is in the monitor list
 				if slices.Contains(monitorIDHashes, s.IDHash()) {
-					monitoredReceivers[s.ID] = startMonitoring(s, reportInterval)
+					if monitor := startMonitoring(s, reportInterval); monitor != nil {
+						monitoredReceivers[s.ID] = monitor
+					}
 				}
 			}
 		}
