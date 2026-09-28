@@ -36,6 +36,11 @@ type Options struct {
 	Clipboard func(string) error // defaults to clipboard.WriteString
 }
 
+// UpdateStreamsMsg carries the current stream snapshots from the manager.
+type UpdateStreamsMsg struct {
+	Streams []*stream.Stream
+}
+
 // App is the root model of the tiling pane UI.
 type App struct {
 	opts   Options
