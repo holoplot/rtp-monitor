@@ -7,10 +7,11 @@ import (
 	"os"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/holoplot/rtp-monitor/internal/ptp"
 	"github.com/holoplot/rtp-monitor/internal/stream"
 	"github.com/holoplot/rtp-monitor/internal/ui"
+	"github.com/holoplot/rtp-monitor/internal/ui/pane"
 	"github.com/holoplot/rtp-monitor/internal/version"
 	"github.com/spf13/cobra"
 )
@@ -186,18 +187,19 @@ func run(cmd *cobra.Command, args []string) error {
 		return runHeadless(manager, monitorIDs, reportInterval)
 	}
 
-	model := ui.NewModel(manager, ptpMonitor, wavFileFolder)
-
-	// Create a new Bubble Tea program
-	p := tea.NewProgram(model, tea.WithAltScreen())
-
-	manager.OnUpdate(func(s []*stream.Stream) {
-		p.Send(ui.UpdateStreamsMsg{
-			Streams: s,
-		})
+	app := ui.NewApp(ui.Options{
+		Streams:   manager,
+		PTP:       ptpMonitor,
+		WavFolder: wavFileFolder,
+		FPGA:      pane.FPGAAvailable(),
 	})
 
-	// Run the program
+	p := tea.NewProgram(app)
+
+	manager.OnUpdate(func(s []*stream.Stream) {
+		p.Send(ui.UpdateStreamsMsg{Streams: s})
+	})
+
 	if _, err := p.Run(); err != nil {
 		slog.Error("error running UI", "error", err)
 		os.Exit(1)
