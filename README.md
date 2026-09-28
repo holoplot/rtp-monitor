@@ -133,7 +133,8 @@ meters of one stream while recording two others.
 Panes survive their stream disappearing: the border turns red, the title says
 `gone`, and the pane reattaches when the stream is announced again. A record
 pane keeps writing while packets arrive and starts new files if the stream's
-format changes.
+format changes. WAV files cannot exceed 4 GiB, so long recordings are split
+before they reach that size and continue in files with a `.1`, `.2`, … suffix.
 
 ### Modes
 
