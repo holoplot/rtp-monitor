@@ -57,7 +57,8 @@ func (p *RTCP) append(now time.Time, src net.Addr, pkt rtcp.Packet) {
 	defer p.mu.Unlock()
 
 	for _, line := range lines {
-		p.log = append(p.log, fmt.Sprintf("%s | %s | %s", now.Format(time.RFC3339), src, line))
+		// SDES items are free text from the network.
+		p.log = append(p.log, sanitize(fmt.Sprintf("%s | %s | %s", now.Format(time.RFC3339), src, line)))
 	}
 	if n := len(p.log) - maxLogLines; n > 0 {
 		p.log = append(p.log[:0:0], p.log[n:]...)

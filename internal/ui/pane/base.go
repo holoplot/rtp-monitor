@@ -30,7 +30,7 @@ func (b *base) StreamID() string { return b.stream.ID }
 func (b *base) Gone() bool       { return b.gone }
 
 func (b *base) Title() string {
-	title := b.kind.String() + " · " + b.stream.Name()
+	title := b.kind.String() + " · " + sanitize(b.stream.Name())
 	if b.gone {
 		title += " · gone"
 	}

@@ -213,5 +213,9 @@ func (d *Details) lines() []string {
 		l.p("")
 	}
 
+	// Names and SDP attributes come from the network.
+	for i := range l {
+		l[i] = sanitize(l[i])
+	}
 	return l
 }

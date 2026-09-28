@@ -3,9 +3,11 @@ package pane
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/charmbracelet/x/ansi"
 	"github.com/holoplot/rtp-monitor/internal/stream"
+	"github.com/pion/rtcp"
 )
 
 func rows(s string) []string { return strings.Split(ansi.Strip(s), "\n") }
@@ -95,4 +97,62 @@ func TestBindAndTitle(t *testing.T) {
 	if got := b.bind(s2); got != stream.DescriptionFormatChanged || b.Gone() {
 		t.Fatalf("bind(changed) = %v, gone = %v", got, b.Gone())
 	}
+}
+
+const evilName = "Evil\x1b[31m\x07\nName"
+
+func evilStream() *stream.Stream {
+	s := testStream()
+	s.Description.Name = evilName
+	return s
+}
+
+// checkClean fails if view leaks control characters from evilName or if any
+// of its rows is not exactly w cells wide.
+func checkClean(t *testing.T, what, view string, w int) {
+	t.Helper()
+	if strings.ContainsAny(view, "\x07") || strings.Contains(view, "\x1b[31m") {
+		t.Errorf("%s leaks control characters: %q", what, view)
+	}
+	if w <= 0 {
+		return
+	}
+	for i, row := range rows(view) {
+		if n := ansi.StringWidth(row); n != w {
+			t.Errorf("%s row %d is %d cells wide, want %d: %q", what, i, n, w, row)
+		}
+	}
+}
+
+func TestNetworkTextIsSanitized(t *testing.T) {
+	l := NewStreamList(false)
+	l.SetStreams([]*stream.Stream{evilStream()})
+	view := l.View(100, 5)
+	checkClean(t, "stream list", view, 100)
+	if !strings.Contains(ansi.Strip(view), "Evil ") {
+		t.Errorf("stream list lacks the name:\n%s", view)
+	}
+
+	d := NewDetails(evilStream(), nil)
+	defer d.Close()
+	checkClean(t, "details", d.View(100, 60), 100)
+
+	m := NewSDP(evilStream())
+	defer m.Close()
+	if title := m.Title(); strings.ContainsAny(title, "\x1b\x07\n") {
+		t.Errorf("title %q contains control characters", title)
+	}
+
+	p := NewRTCP(testStream())
+	defer p.Close()
+	p.append(time.Now(), sender, &rtcp.SourceDescription{Chunks: []rtcp.SourceDescriptionChunk{{
+		Source: 1,
+		Items:  []rtcp.SourceDescriptionItem{{Type: rtcp.SDESCNAME, Text: evilName}},
+	}}})
+	for _, line := range p.log {
+		if strings.ContainsAny(line, "\x1b\x07\n") {
+			t.Errorf("RTCP log line %q contains control characters", line)
+		}
+	}
+	checkClean(t, "RTCP", p.View(100, 5), 100)
 }

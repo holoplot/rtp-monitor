@@ -186,7 +186,7 @@ func formatRow(cols [6]int, cells ...string) string {
 	var b strings.Builder
 	for i, c := range cells {
 		if cols[i] > 0 {
-			b.WriteString(fitLine(c, cols[i]-1))
+			b.WriteString(fitLine(sanitize(c), cols[i]-1)) // names come from the network
 			b.WriteString(" ")
 		}
 	}
