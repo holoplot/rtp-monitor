@@ -1,9 +1,11 @@
 package ui
 
 import (
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/holoplot/rtp-monitor/internal/layout"
 	"github.com/holoplot/rtp-monitor/internal/ui/pane"
 )
 
@@ -41,6 +43,88 @@ func TestDragBorder(t *testing.T) {
 	h.send(tea.MouseMotionMsg{X: 90, Y: 10})
 	if w := h.rects()[1].W; w != 80 {
 		t.Fatalf("width changed after release: %d", w)
+	}
+}
+
+func TestDragPaneTitleSwaps(t *testing.T) {
+	h := newHarness(t, 120, 41)
+	h.press("m") // list {0,0,60,40} | meters {60,0,60,40}
+
+	h.send(tea.MouseClickMsg{X: 70, Y: 0, Button: tea.MouseLeft})
+	h.send(tea.MouseMotionMsg{X: 10, Y: 10, Button: tea.MouseLeft})
+	if !strings.Contains(h.screen(), "drop on a pane to swap") {
+		t.Fatalf("no drag hint:\n%s", h.screen())
+	}
+	h.send(tea.MouseReleaseMsg{X: 10, Y: 10, Button: tea.MouseLeft})
+
+	want := map[layout.PaneID]layout.Rect{
+		1: {X: 60, Y: 0, W: 60, H: 40},
+		2: {X: 0, Y: 0, W: 60, H: 40},
+	}
+	if got := h.rects(); got[1] != want[1] || got[2] != want[2] {
+		t.Fatalf("rects after swap = %v", got)
+	}
+	if h.app.tree.Focus() != 2 {
+		t.Fatalf("focus = %d, want 2 (follows the dragged pane)", h.app.tree.Focus())
+	}
+	if strings.Contains(h.screen(), "drop on a pane to swap") {
+		t.Fatal("drag hint still shown after release")
+	}
+}
+
+func TestDragPaneTitleReleaseOnSourceCancels(t *testing.T) {
+	h := newHarness(t, 120, 41)
+	h.press("m")
+
+	h.send(tea.MouseClickMsg{X: 70, Y: 0, Button: tea.MouseLeft})
+	h.send(tea.MouseReleaseMsg{X: 80, Y: 10, Button: tea.MouseLeft})
+
+	want := map[layout.PaneID]layout.Rect{
+		1: {X: 0, Y: 0, W: 60, H: 40},
+		2: {X: 60, Y: 0, W: 60, H: 40},
+	}
+	if got := h.rects(); got[1] != want[1] || got[2] != want[2] {
+		t.Fatalf("rects changed = %v", got)
+	}
+	if h.app.tree.Focus() != 2 {
+		t.Fatalf("focus = %d, want 2", h.app.tree.Focus())
+	}
+}
+
+func TestDragPaneTitleReleaseOutsidePanesCancels(t *testing.T) {
+	h := newHarness(t, 120, 41)
+	h.press("m")
+
+	h.send(tea.MouseClickMsg{X: 70, Y: 0, Button: tea.MouseLeft})
+	h.send(tea.MouseMotionMsg{X: 10, Y: 10, Button: tea.MouseLeft})
+	h.send(tea.MouseReleaseMsg{X: 10, Y: 40, Button: tea.MouseLeft}) // status bar
+
+	want := map[layout.PaneID]layout.Rect{
+		1: {X: 0, Y: 0, W: 60, H: 40},
+		2: {X: 60, Y: 0, W: 60, H: 40},
+	}
+	if got := h.rects(); got[1] != want[1] || got[2] != want[2] {
+		t.Fatalf("rects changed = %v", got)
+	}
+}
+
+func TestDragPaneTitleDisabledWhileZoomed(t *testing.T) {
+	h := newHarness(t, 120, 41)
+	h.press("m")
+	h.press("ctrl+w", "f", "esc") // zoom in on the focused (list) pane
+
+	h.send(tea.MouseClickMsg{X: 70, Y: 0, Button: tea.MouseLeft})
+	h.send(tea.MouseMotionMsg{X: 10, Y: 10, Button: tea.MouseLeft})
+	h.send(tea.MouseReleaseMsg{X: 10, Y: 10, Button: tea.MouseLeft})
+
+	h.press("ctrl+w", "f", "esc") // zoom back out to inspect the layout
+
+	want := map[layout.PaneID]layout.Rect{
+		1: {X: 0, Y: 0, W: 60, H: 40},
+		2: {X: 60, Y: 0, W: 60, H: 40},
+	}
+	if got := h.rects(); got[1] != want[1] || got[2] != want[2] {
+		t.Fatalf("rects changed while zoomed = %v", got)
 	}
 }
 

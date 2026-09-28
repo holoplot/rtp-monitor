@@ -170,6 +170,7 @@ on the stream list, so you can open several panes in a row.
 
 - Click a pane to focus it; click a row in the stream list to select it
 - Drag the border between two panes to resize them
+- Drag a pane by its title bar onto another pane to swap them
 - Use the mouse wheel to scroll the pane under the pointer
 - Hold `Shift` while dragging to select text (in most terminals)
 

@@ -59,6 +59,8 @@ func (a *App) renderPane(id layout.PaneID, r layout.Rect) string {
 
 func (a *App) borderColor(id layout.PaneID, p pane.Pane) color.Color {
 	switch {
+	case a.dropTarget != nil && *a.dropTarget == id:
+		return theme.UI.PaneBorderFlash
 	case a.now().Before(a.flash[id]):
 		return theme.UI.PaneBorderFlash
 	case id == a.tree.Focus():

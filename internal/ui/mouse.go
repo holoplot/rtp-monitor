@@ -1,11 +1,15 @@
 package ui
 
 import (
+	"time"
+
 	tea "charm.land/bubbletea/v2"
 	"github.com/holoplot/rtp-monitor/internal/ui/pane"
 )
 
 const wheelLines = 3
+
+const dragHint = "drop on a pane to swap · release elsewhere to cancel"
 
 // handleMouse focuses panes on click, drags borders and sends wheel events to
 // the pane under the pointer.
@@ -21,6 +25,12 @@ func (a *App) handleMouse(msg tea.MouseMsg) tea.Cmd {
 			a.drag = &b
 			return nil
 		}
+		if id, ok := a.tree.TitleAt(m.X, m.Y); ok {
+			a.paneDrag = &id
+			a.tree.SetFocus(id)
+			a.status, a.statusUntil = dragHint, time.Time{}
+			return nil
+		}
 		id, ok := a.tree.PaneAt(m.X, m.Y)
 		if !ok {
 			return nil
@@ -33,9 +43,22 @@ func (a *App) handleMouse(msg tea.MouseMsg) tea.Cmd {
 		if a.drag != nil {
 			a.tree.DragBorder(*a.drag, m.X, m.Y)
 		}
+		if a.paneDrag != nil {
+			a.dropTarget = nil
+			if id, ok := a.tree.PaneAt(m.X, m.Y); ok && id != *a.paneDrag {
+				a.dropTarget = &id
+			}
+		}
 
 	case tea.MouseReleaseMsg:
 		a.drag = nil
+		if a.paneDrag != nil {
+			if id, ok := a.tree.PaneAt(m.X, m.Y); ok && id != *a.paneDrag {
+				a.tree.SwapPanes(*a.paneDrag, id)
+			}
+			a.paneDrag, a.dropTarget = nil, nil
+			a.status, a.statusUntil = "", time.Time{}
+		}
 
 	case tea.MouseWheelMsg:
 		id, ok := a.tree.PaneAt(m.X, m.Y)

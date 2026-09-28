@@ -57,6 +57,8 @@ type App struct {
 	flash         map[layout.PaneID]time.Time
 	confirmQuit   bool
 	drag          *layout.Border
+	paneDrag      *layout.PaneID // source pane while dragging its title bar
+	dropTarget    *layout.PaneID // pane under the pointer during a pane drag
 	quitting      bool
 	now           func() time.Time
 }
