@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	tea "charm.land/bubbletea/v2"
 	"github.com/holoplot/rtp-monitor/internal/stream"
 	"github.com/pion/rtp/v2"
 )
@@ -155,5 +156,33 @@ func TestRecordListsRotatedFiles(t *testing.T) {
 	view := strings.Join(rows(r.View(160, 40)), "\n")
 	if !strings.Contains(view, base+".1.wav (384B)") {
 		t.Fatalf("rotated file not listed:\n%s", view)
+	}
+}
+
+func TestRecordEnterRetriesFailedFiles(t *testing.T) {
+	folder := filepath.Join(t.TempDir(), "later")
+	r := newRecord(testStream(), folder, fixedNow)
+	defer r.Close()
+
+	if r.state.errs[0] == nil || !strings.Contains(strings.Join(rows(r.View(160, 20)), "\n"), "no such file") {
+		t.Fatalf("no creation error shown:\n%s", strings.Join(rows(r.View(160, 20)), "\n"))
+	}
+
+	if err := os.Mkdir(folder, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	r.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+
+	if r.state.recorders[0] == nil || r.state.errs[0] != nil {
+		t.Fatalf("enter did not reopen the file: err %v", r.state.errs[0])
+	}
+	if view := strings.Join(rows(r.View(160, 20)), "\n"); strings.Contains(view, "no such file") {
+		t.Fatalf("error still shown:\n%s", view)
+	}
+
+	rec := r.state.recorders[0]
+	r.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+	if r.state.recorders[0] != rec {
+		t.Fatal("enter replaced a working recorder")
 	}
 }

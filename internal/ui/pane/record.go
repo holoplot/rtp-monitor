@@ -99,12 +99,38 @@ func (r *Record) openFiles() {
 		return
 	}
 
+	for i := range desc.Sources {
+		r.openFile(st, i)
+	}
+}
+
+// openFile creates the WAV file of source i in st.
+func (r *Record) openFile(st *recState, i int) {
 	stamp := r.now().Format(time.RFC3339)
 	name := fileNameUnsafe.ReplaceAllString(r.stream.Name(), "_")
-	for i := range desc.Sources {
-		path := uniquePath(filepath.Join(r.folder, fmt.Sprintf("%s_%s-%d.wav", name, stamp, i)))
-		st.recorders[i], st.errs[i] = newWavRecorder(path, int(desc.SampleRate), int(desc.ChannelCount))
+	path := uniquePath(filepath.Join(r.folder, fmt.Sprintf("%s_%s-%d.wav", name, stamp, i)))
+	st.recorders[i], st.errs[i] = newWavRecorder(path, int(st.desc.SampleRate), int(st.desc.ChannelCount))
+}
+
+// retry reopens the files that could not be created and restarts the
+// receiver. Working recorders are kept. It reports whether anything failed.
+func (r *Record) retry() bool {
+	if !slices.ContainsFunc(r.state.errs, func(err error) bool { return err != nil }) && r.err == nil {
+		return false
 	}
+
+	// The running receiver reads r.state, so build a new state instead of
+	// changing the current one in place.
+	old := r.state
+	st := &recState{desc: old.desc, recorders: slices.Clone(old.recorders), errs: slices.Clone(old.errs)}
+	for i, err := range st.errs {
+		if err != nil {
+			r.openFile(st, i)
+		}
+	}
+	r.state = st
+	r.startReceiver()
+	return true
 }
 
 // uniquePath returns p, or p with ".1", ".2", … before the extension if p
@@ -152,8 +178,7 @@ func (r *Record) SetStream(s *stream.Stream) {
 }
 
 func (r *Record) Update(msg tea.Msg) tea.Cmd {
-	if k, ok := msg.(tea.KeyPressMsg); ok && k.String() == "enter" && r.err != nil {
-		r.startReceiver()
+	if k, ok := msg.(tea.KeyPressMsg); ok && k.String() == "enter" && r.retry() {
 		return nil
 	}
 	r.handleScroll(msg)
