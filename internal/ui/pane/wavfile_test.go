@@ -1,7 +1,10 @@
 package pane
 
 import (
+	"bufio"
 	"encoding/binary"
+	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -79,5 +82,43 @@ func TestWavFileHeaderAndData(t *testing.T) {
 		if w.samples[i] != want[i] {
 			t.Fatalf("samples %v, want %v", w.samples, want)
 		}
+	}
+}
+
+// shortWriter writes at most n bytes to w and then fails, like a full disk.
+type shortWriter struct {
+	w io.Writer
+	n int
+}
+
+func (s *shortWriter) Write(p []byte) (int, error) {
+	if len(p) > s.n {
+		n, _ := s.w.Write(p[:s.n])
+		s.n = 0
+		return n, errors.New("disk full")
+	}
+	s.n -= len(p)
+	return s.w.Write(p)
+}
+
+func TestWavFileCloseAfterWriteError(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "x.wav")
+	f, err := createWavFile(path, 48000, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// 20 bytes reach the disk: two whole stereo frames and half of the third.
+	f.w = bufio.NewWriterSize(&shortWriter{w: f.f, n: 20}, 8)
+	err = f.WriteFrames([]stream.SampleFrame{{1, 2}, {3, 4}, {5, 6}, {7, 8}})
+	if err == nil {
+		t.Fatal("WriteFrames succeeded, want an error")
+	}
+	if err := f.Close(); err == nil {
+		t.Fatal("Close succeeded, want the write error")
+	}
+
+	w := readWav(t, path) // checks the header sizes against the data
+	if w.dataSize != 16 || len(w.samples) != 4 || w.samples[3] != 4 {
+		t.Fatalf("data %d bytes, samples %v; want the two whole frames on disk", w.dataSize, w.samples)
 	}
 }

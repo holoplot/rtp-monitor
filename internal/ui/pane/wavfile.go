@@ -79,14 +79,16 @@ func (w *wavFile) WriteFrames(frames []stream.SampleFrame) error {
 func (w *wavFile) DataBytes() uint64 { return w.data }
 
 // Close flushes buffered samples, patches the header sizes, syncs and closes
-// the file.
+// the file. After a write error the header still describes the whole frames
+// that reached the disk, so the file stays playable; the first error is
+// returned.
 func (w *wavFile) Close() error {
 	err := w.w.Flush()
-	if err == nil {
-		err = w.patchHeader()
+	if perr := w.patchHeader(err != nil); err == nil {
+		err = perr
 	}
-	if err == nil {
-		err = w.f.Sync()
+	if serr := w.f.Sync(); err == nil {
+		err = serr
 	}
 	if cerr := w.f.Close(); err == nil {
 		err = cerr
@@ -94,13 +96,29 @@ func (w *wavFile) Close() error {
 	return err
 }
 
-func (w *wavFile) patchHeader() error {
+// patchHeader writes the RIFF and data sizes. If fromDisk is set, the data
+// size is taken from the file length, rounded down to whole frames, and any
+// partial frame is cut off.
+func (w *wavFile) patchHeader(fromDisk bool) error {
+	data := w.data
+	if fromDisk {
+		st, err := w.f.Stat()
+		if err != nil {
+			return err
+		}
+		data = uint64(max(st.Size()-wavHeaderSize, 0))
+		data -= data % w.frameBytes()
+		if err := w.f.Truncate(int64(wavHeaderSize + data)); err != nil {
+			return err
+		}
+	}
+
 	var b [4]byte
-	binary.LittleEndian.PutUint32(b[:], uint32(wavHeaderSize-8+w.data))
+	binary.LittleEndian.PutUint32(b[:], uint32(wavHeaderSize-8+data))
 	if _, err := w.f.WriteAt(b[:], 4); err != nil {
 		return err
 	}
-	binary.LittleEndian.PutUint32(b[:], uint32(w.data))
+	binary.LittleEndian.PutUint32(b[:], uint32(data))
 	_, err := w.f.WriteAt(b[:], 40)
 	return err
 }
