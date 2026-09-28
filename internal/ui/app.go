@@ -120,6 +120,9 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		a.open(msg.Kind, msg.Stream)
 		return a, nil
 
+	case tea.MouseMsg:
+		return a, a.handleMouse(msg)
+
 	case tea.KeyPressMsg:
 		return a.handleKey(msg)
 	}
