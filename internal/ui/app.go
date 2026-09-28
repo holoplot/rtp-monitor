@@ -105,6 +105,10 @@ func (a *App) Init() tea.Cmd {
 }
 
 func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if a.quitting {
+		return a, nil // panes are closed
+	}
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		a.width, a.height = msg.Width, msg.Height
@@ -112,9 +116,6 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a, nil
 
 	case tickMsg:
-		if a.quitting {
-			return a, nil
-		}
 		cmds := []tea.Cmd{tick()}
 		for _, p := range a.panes {
 			cmds = append(cmds, p.Update(pane.TickMsg(msg)))

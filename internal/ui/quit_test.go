@@ -52,3 +52,20 @@ func TestCloseIsIdempotent(t *testing.T) {
 		t.Fatalf("pane closed %d times without quit, want 1", n)
 	}
 }
+
+func TestMessagesIgnoredAfterQuit(t *testing.T) {
+	h := newHarness(t, 120, 41)
+	h.press("m")
+	if _, ok := h.press("q").(tea.QuitMsg); !ok {
+		t.Fatal("q did not quit")
+	}
+
+	h.send(UpdateStreamsMsg{})
+	if h.panes[0].gone {
+		t.Fatal("stream update reached a pane after quit")
+	}
+	h.send(tea.MouseWheelMsg{X: 70, Y: 10, Button: tea.MouseWheelDown})
+	if len(h.panes[0].msgs) != 0 {
+		t.Fatalf("pane got %v after quit", h.panes[0].msgs)
+	}
+}
