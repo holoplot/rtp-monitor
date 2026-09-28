@@ -1,7 +1,6 @@
 package stream
 
 import (
-	"errors"
 	"net"
 	"sync"
 
@@ -23,6 +22,10 @@ type RTPReceiver struct {
 }
 
 func (s *Stream) NewRTPReceiver(cb RTPReceiverCallback) (*RTPReceiver, error) {
+	if s.manager == nil {
+		return nil, ErrDetached
+	}
+
 	r := &RTPReceiver{
 		stream:         s,
 		consumers:      make([]*multicast.Consumer, 0),
@@ -65,75 +68,19 @@ func (s *Stream) NewRTPReceiver(cb RTPReceiverCallback) (*RTPReceiver, error) {
 
 			}
 		})
-		if err == nil {
-			r.consumers = append(r.consumers, c)
-		} else {
+		if err != nil {
+			r.Close()
 			return nil, err
 		}
+
+		r.consumers = append(r.consumers, c)
 	}
 
 	return r, nil
 }
 
-type (
-	Sample      int32
-	SampleFrame []Sample
-)
-
-var (
-	ErrUnsupportedContentType = errors.New("unsupported content type")
-)
-
 func (r *RTPReceiver) ExtractSamples(packet *rtp.Packet) ([]SampleFrame, error) {
-	var bytesPerSample uint32
-
-	switch r.stream.Description.ContentType {
-	case ContentTypePCM16:
-		bytesPerSample = 2
-	case ContentTypePCM24:
-		bytesPerSample = 3
-	default:
-		return nil, ErrUnsupportedContentType
-	}
-
-	channels := r.stream.Description.ChannelCount
-	bytesPerFrame := bytesPerSample * channels
-	numFrames := uint32(len(packet.Payload)) / bytesPerFrame
-
-	var (
-		i      uint32
-		frames []SampleFrame
-	)
-
-	for range numFrames {
-		frame := make(SampleFrame, channels)
-
-		for ch := range channels {
-			switch bytesPerSample {
-			case 2:
-				value := uint32(packet.Payload[i])<<24 |
-					uint32(packet.Payload[i+1])<<16
-
-				frame[ch] = Sample(value)
-
-			case 3:
-				value := uint32(packet.Payload[i])<<24 |
-					uint32(packet.Payload[i+1])<<16 |
-					uint32(packet.Payload[i+2])<<8
-
-				frame[ch] = Sample(value)
-
-			default:
-				return nil, ErrUnsupportedContentType
-			}
-
-			i += bytesPerSample
-		}
-
-		frames = append(frames, frame)
-	}
-
-	return frames, nil
+	return r.stream.Description.ExtractSamples(packet)
 }
 
 func (r *RTPReceiver) Close() {
@@ -180,6 +127,10 @@ type RTCPReceiver struct {
 }
 
 func (s *Stream) NewRTCPReceiver(cb RTCPReceiverCallback) (*RTCPReceiver, error) {
+	if s.manager == nil {
+		return nil, ErrDetached
+	}
+
 	r := &RTCPReceiver{
 		stream:     s,
 		consumers:  make([]*multicast.Consumer, 0),
@@ -204,11 +155,12 @@ func (s *Stream) NewRTCPReceiver(cb RTCPReceiverCallback) (*RTCPReceiver, error)
 				}
 			}
 		})
-		if err == nil {
-			r.consumers = append(r.consumers, c)
-		} else {
+		if err != nil {
+			r.Close()
 			return nil, err
 		}
+
+		r.consumers = append(r.consumers, c)
 	}
 
 	return r, nil
