@@ -17,7 +17,7 @@ require (
 	github.com/holoplot/ravenna-fpga-drivers/go v0.0.0-20260831090228-89cd73216896
 	github.com/holoplot/sdp v0.18.3-0.20220210000336-2bb0da759e83
 	github.com/lucasb-eyer/go-colorful v1.4.1
-	github.com/pion/rtcp v1.2.17
+	github.com/pion/rtcp v1.2.18
 	github.com/pion/rtp/v2 v2.0.0
 	github.com/rmhubbert/bubbletea-overlay v0.6.9
 	github.com/spf13/cobra v1.10.2
