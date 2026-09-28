@@ -31,3 +31,24 @@ func TestQuitConfirmationWithRecordings(t *testing.T) {
 		t.Fatal("record pane not closed")
 	}
 }
+
+func TestCloseIsIdempotent(t *testing.T) {
+	h := newHarness(t, 120, 41)
+	h.press("m")
+	if _, ok := h.press("q").(tea.QuitMsg); !ok {
+		t.Fatal("q did not quit")
+	}
+	h.app.Close()
+	h.app.Close()
+	if n := h.panes[0].closes; n != 1 {
+		t.Fatalf("pane closed %d times, want 1", n)
+	}
+
+	h2 := newHarness(t, 120, 41)
+	h2.press("R")
+	h2.app.Close() // e.g. SIGTERM: Update never saw a quit key
+	h2.app.Close()
+	if n := h2.panes[0].closes; n != 1 {
+		t.Fatalf("pane closed %d times without quit, want 1", n)
+	}
+}

@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"net"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -200,7 +202,19 @@ func run(cmd *cobra.Command, args []string) error {
 		p.Send(ui.UpdateStreamsMsg{Streams: s})
 	})
 
-	if _, err := p.Run(); err != nil {
+	// Bubble Tea handles SIGINT and SIGTERM itself; a closed terminal (SIGHUP)
+	// would otherwise kill the process before recordings are finalized.
+	hup := make(chan os.Signal, 1)
+	signal.Notify(hup, syscall.SIGHUP)
+	defer signal.Stop(hup)
+	go func() {
+		<-hup
+		p.Quit()
+	}()
+
+	_, err = p.Run()
+	app.Close() // finalize recordings on every exit path
+	if err != nil {
 		slog.Error("error running UI", "error", err)
 		os.Exit(1)
 	}

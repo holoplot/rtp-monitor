@@ -60,6 +60,7 @@ type App struct {
 	paneDrag      *layout.PaneID // source pane while dragging its title bar
 	dropTarget    *layout.PaneID // pane under the pointer during a pane drag
 	quitting      bool
+	closed        bool
 	now           func() time.Time
 }
 
@@ -343,8 +344,19 @@ func (a *App) requestQuit() (tea.Model, tea.Cmd) {
 
 func (a *App) quit() (tea.Model, tea.Cmd) {
 	a.quitting = true
+	a.Close()
+	return a, tea.Quit
+}
+
+// Close closes every pane, finalizing recordings. It is idempotent and must be
+// called once the program has stopped, whatever made it stop (quit key,
+// signal, panic), so no WAV file is left unfinalized.
+func (a *App) Close() {
+	if a.closed {
+		return
+	}
+	a.closed = true
 	for _, p := range a.panes {
 		p.Close()
 	}
-	return a, tea.Quit
 }

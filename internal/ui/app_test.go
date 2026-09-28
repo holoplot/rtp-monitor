@@ -16,6 +16,7 @@ type fakePane struct {
 	s      *stream.Stream
 	gone   bool
 	closed bool
+	closes int
 	msgs   []tea.Msg
 }
 
@@ -25,7 +26,7 @@ func (f *fakePane) StreamID() string     { return f.s.ID }
 func (f *fakePane) Gone() bool           { return f.gone }
 func (f *fakePane) View(_, _ int) string { return "fake" }
 func (f *fakePane) CopyText() string     { return "copy of " + f.s.Name() }
-func (f *fakePane) Close()               { f.closed = true }
+func (f *fakePane) Close()               { f.closed = true; f.closes++ }
 
 func (f *fakePane) SetStream(s *stream.Stream) {
 	if s == nil {
