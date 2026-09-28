@@ -18,7 +18,7 @@ type Transmitter struct {
 type Monitor struct {
 	mutex             sync.Mutex
 	multicastListener *multicast.Listener
-	consumer          *multicast.Consumer
+	consumers         []*multicast.Consumer
 	transmitters      map[ClockIdentity]*Transmitter
 }
 
@@ -88,23 +88,18 @@ func NewMonitor(ifis []*net.Interface) (*Monitor, error) {
 		transmitters:      make(map[ClockIdentity]*Transmitter),
 	}
 
-	addr := &net.UDPAddr{
-		IP:   net.IPv4(224, 0, 1, 129),
-		Port: 319,
-	}
+	for _, port := range []int{319, 320} {
+		addr := &net.UDPAddr{
+			IP:   net.IPv4(224, 0, 1, 129),
+			Port: port,
+		}
 
-	if c, err := m.multicastListener.AddConsumer(addr, m.parsePacket); err == nil {
-		m.consumer = c
-	} else {
-		return nil, err
-	}
+		c, err := m.multicastListener.AddConsumer(addr, m.parsePacket)
+		if err != nil {
+			return nil, err
+		}
 
-	addr.Port = 320
-
-	if c, err := m.multicastListener.AddConsumer(addr, m.parsePacket); err == nil {
-		m.consumer = c
-	} else {
-		return nil, err
+		m.consumers = append(m.consumers, c)
 	}
 
 	return m, nil
