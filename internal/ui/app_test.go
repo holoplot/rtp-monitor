@@ -247,3 +247,19 @@ func TestAllStreamsVanish(t *testing.T) {
 		t.Fatalf("empty message missing:\n%s", h.screen())
 	}
 }
+
+func TestInitialSnapshotAfterLiveUpdateIgnored(t *testing.T) {
+	h := newHarness(t, 120, 41) // already received a live update
+	h.press("m")
+
+	h.send(UpdateStreamsMsg{Streams: testStreams()[1:], Initial: true})
+	if h.panes[0].gone || !strings.Contains(h.screen(), "Streams (2)") {
+		t.Fatalf("stale initial snapshot applied:\n%s", h.screen())
+	}
+
+	fresh := NewApp(Options{})
+	fresh.Update(UpdateStreamsMsg{Streams: testStreams(), Initial: true})
+	if fresh.list.Selected() == nil {
+		t.Fatal("initial snapshot ignored before any live update")
+	}
+}

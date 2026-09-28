@@ -39,6 +39,9 @@ type Options struct {
 // UpdateStreamsMsg carries the current stream snapshots from the manager.
 type UpdateStreamsMsg struct {
 	Streams []*stream.Stream
+	// Initial marks the startup snapshot from Options.Streams. It is dropped
+	// if a live update from the manager arrived first, as it may be older.
+	Initial bool
 }
 
 // App is the root model of the tiling pane UI.
@@ -59,6 +62,7 @@ type App struct {
 	drag          *layout.Border
 	paneDrag      *layout.PaneID // source pane while dragging its title bar
 	dropTarget    *layout.PaneID // pane under the pointer during a pane drag
+	gotUpdate     bool           // a live UpdateStreamsMsg arrived
 	quitting      bool
 	closed        bool
 	now           func() time.Time
@@ -95,7 +99,7 @@ func NewApp(opts Options) *App {
 func (a *App) Init() tea.Cmd {
 	cmds := []tea.Cmd{tick()}
 	if src := a.opts.Streams; src != nil {
-		cmds = append(cmds, func() tea.Msg { return UpdateStreamsMsg{Streams: src.GetAllStreams()} })
+		cmds = append(cmds, func() tea.Msg { return UpdateStreamsMsg{Streams: src.GetAllStreams(), Initial: true} })
 	}
 	return tea.Batch(cmds...)
 }
@@ -121,6 +125,10 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return a, tea.Batch(cmds...)
 
 	case UpdateStreamsMsg:
+		if msg.Initial && a.gotUpdate {
+			return a, nil
+		}
+		a.gotUpdate = a.gotUpdate || !msg.Initial
 		a.setStreams(msg.Streams)
 		return a, nil
 

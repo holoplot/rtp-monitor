@@ -2,6 +2,7 @@ package stream
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -90,4 +91,42 @@ func TestUpdateCallbackRace(t *testing.T) {
 		}
 	}
 	wg.Wait()
+}
+
+// Update callbacks must see snapshots in the order they were taken: with
+// streams only being added, the stream count must never go down.
+func TestUpdatesDeliveredInOrder(t *testing.T) {
+	m := NewManager(nil)
+	sdp := buildSDP("96 L24/48000/8", true)
+
+	var mu sync.Mutex
+	var counts []int
+	m.OnUpdate(func(streams []*Stream) {
+		runtime.Gosched() // widen the window between snapshot and delivery
+		mu.Lock()
+		counts = append(counts, len(streams))
+		mu.Unlock()
+	})
+
+	var wg sync.WaitGroup
+	for g := range 8 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := range 50 {
+				id := fmt.Sprint(1000 + g*100 + i)
+				if _, err := m.AddStreamFromSDP(renamed(sdp, "S"+id, id), DiscoveryMethodSAP, "eth0"); err != nil {
+					t.Error(err)
+					return
+				}
+			}
+		}()
+	}
+	wg.Wait()
+
+	for i := 1; i < len(counts); i++ {
+		if counts[i] < counts[i-1] {
+			t.Fatalf("update %d has %d streams after an update with %d: delivered out of order", i, counts[i], counts[i-1])
+		}
+	}
 }

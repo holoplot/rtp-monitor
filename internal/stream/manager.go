@@ -36,6 +36,11 @@ type Manager struct {
 	mutex   sync.Mutex
 	streams map[string]*Stream
 
+	// deliverMu is held from taking a snapshot until the update callback
+	// returns, so callbacks see snapshots in order. It is separate from mutex
+	// because callbacks may call back into the manager.
+	deliverMu sync.Mutex
+
 	updateCallback UpdateCallback
 
 	multicastListener *multicast.Listener
@@ -73,6 +78,9 @@ func NewManager(ifis []*net.Interface) *Manager {
 }
 
 func (m *Manager) update() {
+	m.deliverMu.Lock()
+	defer m.deliverMu.Unlock()
+
 	m.mutex.Lock()
 	callback := m.updateCallback
 	if callback == nil {
