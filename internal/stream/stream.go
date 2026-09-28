@@ -120,7 +120,7 @@ func ParseSDP(b []byte) (*StreamDescription, string, error) {
 		}
 
 		mediaclk := media.Attribute("mediaclk")
-		if len(s) > 0 {
+		if len(mediaclk) > 0 {
 			source.MediaClock = mediaclk
 
 			if i, err := strconv.Atoi(media.Attribute("sync-time")); err == nil {

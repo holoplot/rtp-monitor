@@ -43,3 +43,19 @@ func TestParseSDPContentType(t *testing.T) {
 		}
 	}
 }
+
+func TestParseSDPMediaClock(t *testing.T) {
+	for _, withFilter := range []bool{true, false} {
+		sd, _, err := ParseSDP(buildSDP("96 L24/48000/8", withFilter))
+		if err != nil {
+			t.Fatal(err)
+		}
+		src := sd.Sources[0]
+		if src.MediaClock != "direct=0" {
+			t.Errorf("sourceFilter=%v: MediaClock = %q, want %q", withFilter, src.MediaClock, "direct=0")
+		}
+		if src.SyncTime != 1234 {
+			t.Errorf("sourceFilter=%v: SyncTime = %d, want 1234", withFilter, src.SyncTime)
+		}
+	}
+}
