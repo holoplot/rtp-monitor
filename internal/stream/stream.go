@@ -136,6 +136,8 @@ func ParseSDP(b []byte) (*StreamDescription, string, error) {
 			if len(b) == 3 {
 				sd.ContentType = func(s string) ContentType {
 					switch s {
+					case "L16":
+						return ContentTypePCM16
 					case "L24":
 						return ContentTypePCM24
 					default:
