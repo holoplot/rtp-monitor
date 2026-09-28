@@ -134,10 +134,93 @@ func (a *App) View() tea.View {
 }
 
 func (a *App) handleKey(k tea.KeyPressMsg) (tea.Model, tea.Cmd) {
-	if k.String() == "ctrl+c" {
+	key := k.String()
+	if key == "ctrl+c" {
 		return a.requestQuit()
 	}
-	return a.normalKey(k)
+	if next, ok := modeSwitch(a.mode, key); ok {
+		a.mode = next
+		return a, nil
+	}
+
+	switch a.mode {
+	case ModePane:
+		a.paneModeKey(key)
+	case ModeResize:
+		a.resizeModeKey(key)
+	case ModeMove:
+		a.moveModeKey(key)
+	default:
+		return a.normalKey(k)
+	}
+	return a, nil
+}
+
+func (a *App) paneModeKey(key string) {
+	if d, ok := direction(key); ok {
+		a.tree.MoveFocus(d)
+		return
+	}
+	switch key {
+	case "x":
+		a.closePane(a.tree.Focus())
+	case "f":
+		a.tree.ToggleZoom()
+	case "t":
+		if err := a.tree.Flip(); err != nil {
+			a.setStatus(err.Error())
+		}
+	case "c":
+		a.copyFocused()
+	}
+}
+
+func (a *App) resizeModeKey(key string) {
+	var err error
+	if d, ok := direction(key); ok {
+		err = a.tree.Resize(d, true)
+	} else if d, ok := shrinkDirection(key); ok {
+		err = a.tree.Resize(d, false)
+	} else {
+		switch key {
+		case "+", "=":
+			err = a.tree.ResizeAll(true)
+		case "-":
+			err = a.tree.ResizeAll(false)
+		}
+	}
+	if err != nil {
+		a.setStatus(err.Error())
+	}
+}
+
+func (a *App) moveModeKey(key string) {
+	if d, ok := direction(key); ok {
+		a.tree.Swap(d)
+		return
+	}
+	if key == "tab" {
+		a.tree.SwapNext()
+	}
+}
+
+func (a *App) closePane(id layout.PaneID) {
+	if id == a.listID {
+		a.setStatus("the stream list cannot be closed")
+		return
+	}
+	p, ok := a.panes[id]
+	if !ok {
+		return
+	}
+	if err := a.tree.Close(id); err != nil {
+		a.setStatus(err.Error())
+		return
+	}
+	p.Close()
+	delete(a.panes, id)
+	delete(a.flash, id)
+	a.updatePaneCounts()
 }
 
 func (a *App) normalKey(k tea.KeyPressMsg) (tea.Model, tea.Cmd) {

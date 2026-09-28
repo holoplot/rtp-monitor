@@ -3,6 +3,7 @@ package ui
 import (
 	"image/color"
 
+	"github.com/holoplot/rtp-monitor/internal/layout"
 	"github.com/holoplot/rtp-monitor/internal/theme"
 )
 
@@ -53,4 +54,61 @@ func (m Mode) Help() string {
 	default:
 		return "tab focus · ctrl+w pane/resize/move · c copy · ctrl+c quit · shift+drag selects text"
 	}
+}
+
+// modeSwitch returns the mode that key switches to from cur, if key is a
+// mode key there. Ctrl+w is the only leader, because zellij and tmux bind
+// most other Ctrl and Alt keys by default: it enters Pane mode from Normal
+// mode and returns to Normal mode from any other mode. In Pane mode, r
+// enters Resize mode and m enters Move mode.
+func modeSwitch(cur Mode, key string) (Mode, bool) {
+	switch key {
+	case "ctrl+w":
+		if cur == ModeNormal {
+			return ModePane, true
+		}
+		return ModeNormal, true
+	case "r":
+		if cur == ModePane {
+			return ModeResize, true
+		}
+	case "m":
+		if cur == ModePane {
+			return ModeMove, true
+		}
+	case "esc", "enter":
+		if cur != ModeNormal {
+			return ModeNormal, true
+		}
+	}
+	return cur, false
+}
+
+func direction(key string) (layout.Direction, bool) {
+	switch key {
+	case "left", "h":
+		return layout.Left, true
+	case "right", "l":
+		return layout.Right, true
+	case "up", "k":
+		return layout.Up, true
+	case "down", "j":
+		return layout.Down, true
+	}
+	return 0, false
+}
+
+// shrinkDirection maps HJKL to the side whose edge moves inward.
+func shrinkDirection(key string) (layout.Direction, bool) {
+	switch key {
+	case "H":
+		return layout.Left, true
+	case "L":
+		return layout.Right, true
+	case "K":
+		return layout.Up, true
+	case "J":
+		return layout.Down, true
+	}
+	return 0, false
 }
