@@ -13,6 +13,21 @@ func (t *Tree) PaneAt(x, y int) (PaneID, bool) {
 	return 0, false
 }
 
+// TitleAt returns the visible pane whose title bar (its top border row, i.e.
+// y == rect.Y and rect.X <= x < rect.X+rect.W) contains cell (x, y). Nothing
+// is draggable while zoomed.
+func (t *Tree) TitleAt(x, y int) (PaneID, bool) {
+	if t.zoomed {
+		return 0, false
+	}
+	for id, r := range t.Rects() {
+		if y == r.Y && x >= r.X && x < r.X+r.W {
+			return id, true
+		}
+	}
+	return 0, false
+}
+
 // BorderAt returns the split whose boundary is at cell (x, y). Both border
 // columns (or rows) at a boundary count: the first pane's right or bottom
 // border and the second pane's left or top border. Where boundaries cross,

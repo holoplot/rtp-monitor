@@ -83,6 +83,16 @@ func (t *Tree) SwapNext() bool {
 	return true
 }
 
+// SwapPanes exchanges panes a and b. It returns false if either pane is
+// unknown or a == b. Focus is unchanged, so it stays on the same pane ID.
+func (t *Tree) SwapPanes(a, b PaneID) bool {
+	if a == b || t.find(a) == nil || t.find(b) == nil {
+		return false
+	}
+	t.swapPanes(a, b)
+	return true
+}
+
 func (t *Tree) swapPanes(a, b PaneID) {
 	na, nb := t.find(a), t.find(b)
 	na.pane, nb.pane = nb.pane, na.pane
