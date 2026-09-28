@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -55,6 +56,7 @@ func (s *recState) close() []recStats {
 			continue
 		}
 		err := r.Close()
+		out = append(out, r.Parts()...)
 		st := r.Stats()
 		if st.Err == nil {
 			st.Err = err
@@ -204,8 +206,14 @@ func (r *Record) lines() []string {
 		l.p("")
 	}
 
+	all := slices.Clone(r.finished)
+	for _, rec := range r.state.recorders {
+		if rec != nil {
+			all = append(all, rec.Parts()...) // rotated out while recording
+		}
+	}
 	var finished []recStats
-	for _, st := range r.finished {
+	for _, st := range all {
 		if st.Bytes > 0 || st.Err != nil {
 			finished = append(finished, st)
 		}

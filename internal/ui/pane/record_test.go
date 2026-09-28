@@ -128,3 +128,32 @@ func TestRecordUnsupportedEncoding(t *testing.T) {
 		t.Errorf("%d files created, want 0", len(entries))
 	}
 }
+
+func TestRecordListsRotatedFiles(t *testing.T) {
+	lowerWavLimit(t, 500) // one 384-byte packet per file
+	dir := t.TempDir()
+	r := newRecord(testStream(), dir, fixedNow)
+	defer r.Close()
+
+	for range 3 {
+		r.state.onPacket(0, &rtp.Packet{Payload: make([]byte, 48*2*3)})
+	}
+	s2 := testStream()
+	s2.Description.ChannelCount = 4
+	r.SetStream(s2)
+
+	base := filepath.Join(dir, "Alpha_2026-09-28T12:00:00Z-0")
+	want := []string{base + ".wav", base + ".1.wav", base + ".2.wav"}
+	if len(r.finished) != len(want) {
+		t.Fatalf("finished = %+v, want %d files", r.finished, len(want))
+	}
+	for i, st := range r.finished {
+		if st.Path != want[i] || st.Bytes != 384 {
+			t.Fatalf("finished[%d] = %+v, want %s with 384 bytes", i, st, want[i])
+		}
+	}
+	view := strings.Join(rows(r.View(160, 40)), "\n")
+	if !strings.Contains(view, base+".1.wav (384B)") {
+		t.Fatalf("rotated file not listed:\n%s", view)
+	}
+}

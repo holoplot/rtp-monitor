@@ -81,3 +81,68 @@ func TestWavRecorderCreateError(t *testing.T) {
 		t.Fatalf("err = %v, want ErrNotExist", err)
 	}
 }
+
+func lowerWavLimit(t *testing.T, n uint64) {
+	t.Helper()
+	old := maxWavDataBytes
+	maxWavDataBytes = n
+	t.Cleanup(func() { maxWavDataBytes = old })
+}
+
+func TestWavRecorderRotatesBeforeLimit(t *testing.T) {
+	lowerWavLimit(t, 40) // two packets of two stereo frames (16 bytes each) per file
+	dir := t.TempDir()
+	path := filepath.Join(dir, "rec.wav")
+	r, err := newWavRecorder(path, 48000, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var next stream.Sample
+	for range 5 {
+		frames := []stream.SampleFrame{{next, next + 1}, {next + 2, next + 3}}
+		next += 4
+		if !r.Push(frames) {
+			t.Fatal("push dropped")
+		}
+	}
+	if err := r.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	paths := []string{path, filepath.Join(dir, "rec.1.wav"), filepath.Join(dir, "rec.2.wav")}
+	sizes := []uint64{32, 32, 16}
+
+	parts := r.Parts()
+	if len(parts) != 2 {
+		t.Fatalf("parts = %+v, want 2", parts)
+	}
+	for i, p := range parts {
+		if p.Path != paths[i] || p.Bytes != sizes[i] || p.Err != nil {
+			t.Fatalf("part %d = %+v, want %s with %d bytes", i, p, paths[i], sizes[i])
+		}
+	}
+	if st := r.Stats(); st.Path != paths[2] || st.Bytes != sizes[2] {
+		t.Fatalf("stats %+v, want %s with %d bytes", st, paths[2], sizes[2])
+	}
+
+	var all []int32
+	for i, p := range paths {
+		w := readWav(t, p) // checks the header sizes against the data
+		if uint64(w.dataSize) != sizes[i] || w.dataSize > 40 {
+			t.Fatalf("%s: %d data bytes, want %d", p, w.dataSize, sizes[i])
+		}
+		all = append(all, w.samples...)
+	}
+	if len(all) != int(next) {
+		t.Fatalf("%d samples across files, want %d", len(all), next)
+	}
+	for i, s := range all {
+		if s != int32(i) {
+			t.Fatalf("sample %d = %d: data lost or reordered across files", i, s)
+		}
+	}
+	if entries, _ := os.ReadDir(dir); len(entries) != 3 {
+		t.Fatalf("%d files, want 3", len(entries))
+	}
+}
