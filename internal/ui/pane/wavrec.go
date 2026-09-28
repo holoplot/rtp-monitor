@@ -7,8 +7,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/go-audio/audio"
-	"github.com/go-audio/wav"
 	"github.com/holoplot/rtp-monitor/internal/stream"
 )
 
@@ -17,12 +15,9 @@ const recorderQueue = 1000 // packets buffered between receiver and disk
 // wavRecorder writes sample frames to a 32-bit WAV file on its own goroutine.
 // Push never blocks, so receiver callbacks can call it directly.
 type wavRecorder struct {
-	path     string
-	file     *os.File
-	enc      *wav.Encoder
-	rate     int
-	channels int
-	started  time.Time
+	path    string
+	file    *wavFile
+	started time.Time
 
 	mu     sync.RWMutex // guards closed and closing ch
 	closed bool
@@ -46,20 +41,17 @@ type recStats struct {
 }
 
 func newWavRecorder(path string, sampleRate, channels int) (*wavRecorder, error) {
-	f, err := os.Create(path)
+	f, err := createWavFile(path, sampleRate, channels)
 	if err != nil {
 		return nil, err
 	}
 
 	r := &wavRecorder{
-		path:     path,
-		file:     f,
-		enc:      wav.NewEncoder(f, sampleRate, 32, channels, 1),
-		rate:     sampleRate,
-		channels: channels,
-		started:  time.Now(),
-		ch:       make(chan []stream.SampleFrame, recorderQueue),
-		done:     make(chan struct{}),
+		path:    path,
+		file:    f,
+		started: time.Now(),
+		ch:      make(chan []stream.SampleFrame, recorderQueue),
+		done:    make(chan struct{}),
 	}
 	go r.run()
 
@@ -92,22 +84,12 @@ func (r *wavRecorder) run() {
 			continue // drain the queue after a write error
 		}
 
-		buf := &audio.IntBuffer{
-			Format:         &audio.Format{NumChannels: r.channels, SampleRate: r.rate},
-			SourceBitDepth: 32,
-			Data:           make([]int, 0, len(frames)*r.channels),
-		}
-		for _, frame := range frames {
-			for _, s := range frame {
-				buf.Data = append(buf.Data, int(s))
-			}
-		}
-
-		if err := r.enc.Write(buf); err != nil {
+		before := r.file.DataBytes()
+		if err := r.file.WriteFrames(frames); err != nil {
 			r.setWriteErr(fmt.Errorf("failed to write to WAV file: %w", err))
 			continue
 		}
-		r.bytes.Add(uint64(len(buf.Data) * 4))
+		r.bytes.Add(r.file.DataBytes() - before)
 		r.lastWrite.Store(time.Now().UnixNano())
 	}
 }
@@ -126,10 +108,7 @@ func (r *wavRecorder) Close() error {
 
 	<-r.done
 
-	err := r.enc.Close()
-	if cerr := r.file.Close(); err == nil {
-		err = cerr
-	}
+	err := r.file.Close()
 	if r.bytes.Load() == 0 {
 		_ = os.Remove(r.path)
 	}

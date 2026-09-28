@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/go-audio/wav"
 	"github.com/holoplot/rtp-monitor/internal/stream"
 )
 
@@ -31,21 +30,12 @@ func TestWavRecorderWritesFile(t *testing.T) {
 		t.Fatalf("stats %+v", st)
 	}
 
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatal(err)
+	w := readWav(t, path)
+	if w.channels != 2 || w.rate != 48000 || w.bits != 32 || len(w.samples) != 40 {
+		t.Fatalf("decoded %d ch, %d Hz, %d bit, %d samples", w.channels, w.rate, w.bits, len(w.samples))
 	}
-	defer f.Close()
-	d := wav.NewDecoder(f)
-	buf, err := d.FullPCMBuffer()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if d.NumChans != 2 || d.SampleRate != 48000 || d.BitDepth != 32 || len(buf.Data) != 40 {
-		t.Fatalf("decoded %d ch, %d Hz, %d bit, %d samples", d.NumChans, d.SampleRate, d.BitDepth, len(buf.Data))
-	}
-	if buf.Data[0] != 1<<16 || buf.Data[1] != -(1<<16) {
-		t.Fatalf("first frame %v", buf.Data[:2])
+	if w.samples[0] != 1<<16 || w.samples[1] != -(1<<16) {
+		t.Fatalf("first frame %v", w.samples[:2])
 	}
 }
 
