@@ -128,18 +128,20 @@ func (r *wavRecorder) rotate() error {
 	r.parts = append(r.parts, st)
 	r.fileMu.Unlock()
 
+	// Stats describe the new file from here on, even if creating it fails, so
+	// the finished file is not reported twice.
 	path := uniquePath(r.basePath)
+	r.fileMu.Lock()
+	r.path, r.started = path, time.Now()
+	r.bytes.Store(0)
+	r.lastWrite.Store(0)
+	r.fileMu.Unlock()
+
 	f, err := createWavFile(path, r.sampleRate, r.chans)
 	if err != nil {
 		return err
 	}
 	r.file = f
-	r.bytes.Store(0)
-	r.lastWrite.Store(0)
-
-	r.fileMu.Lock()
-	r.path, r.started = path, time.Now()
-	r.fileMu.Unlock()
 	return nil
 }
 

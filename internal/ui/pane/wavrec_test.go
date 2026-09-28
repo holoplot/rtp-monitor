@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/holoplot/rtp-monitor/internal/stream"
 )
@@ -144,5 +145,46 @@ func TestWavRecorderRotatesBeforeLimit(t *testing.T) {
 	}
 	if entries, _ := os.ReadDir(dir); len(entries) != 3 {
 		t.Fatalf("%d files, want 3", len(entries))
+	}
+}
+
+func TestWavRecorderFailedRotation(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root ignores directory permissions")
+	}
+	lowerWavLimit(t, 16)
+	dir := t.TempDir()
+	path := filepath.Join(dir, "rec.wav")
+	r, err := newWavRecorder(path, 48000, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.Push([]stream.SampleFrame{{1, 2}, {3, 4}})
+	waitFor(t, func() bool { return r.Stats().Bytes == 16 })
+
+	if err := os.Chmod(dir, 0o555); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(dir, 0o755) })
+	r.Push([]stream.SampleFrame{{5, 6}})
+	waitFor(t, func() bool { return r.Stats().Err != nil })
+
+	st := r.Stats()
+	if want := filepath.Join(dir, "rec.1.wav"); st.Path != want || st.Bytes != 0 {
+		t.Fatalf("stats %+v, want the failed file %s with no bytes", st, want)
+	}
+	if parts := r.Parts(); len(parts) != 1 || parts[0].Path != path || parts[0].Err != nil {
+		t.Fatalf("parts %+v, want only the finished %s", parts, path)
+	}
+	_ = r.Close()
+}
+
+func waitFor(t *testing.T, cond func() bool) {
+	t.Helper()
+	for deadline := time.Now().Add(5 * time.Second); !cond(); {
+		if time.Now().After(deadline) {
+			t.Fatal("timed out")
+		}
+		time.Sleep(time.Millisecond)
 	}
 }
