@@ -142,3 +142,29 @@ func TestWheelScrollsPaneUnderPointer(t *testing.T) {
 		t.Fatal("wheel changed focus")
 	}
 }
+
+func TestClickResetsStaleDrag(t *testing.T) {
+	h := newHarness(t, 120, 41)
+	h.press("m")
+	want := map[layout.PaneID]layout.Rect{
+		1: {X: 0, Y: 0, W: 60, H: 40},
+		2: {X: 60, Y: 0, W: 60, H: 40},
+	}
+
+	h.send(tea.MouseClickMsg{X: 70, Y: 0, Button: tea.MouseLeft}) // title drag, release lost
+	h.send(tea.MouseClickMsg{X: 10, Y: 10, Button: tea.MouseLeft})
+	if strings.Contains(h.screen(), "drop on a pane to swap") {
+		t.Fatal("drag hint survived a new click")
+	}
+	h.send(tea.MouseReleaseMsg{X: 10, Y: 10, Button: tea.MouseLeft})
+	if got := h.rects(); got[1] != want[1] || got[2] != want[2] {
+		t.Fatalf("stale title drag swapped panes: %v", got)
+	}
+
+	h.send(tea.MouseClickMsg{X: 59, Y: 10, Button: tea.MouseLeft}) // border drag, release lost
+	h.send(tea.MouseClickMsg{X: 10, Y: 10, Button: tea.MouseLeft})
+	h.send(tea.MouseMotionMsg{X: 30, Y: 10})
+	if got := h.rects(); got[1] != want[1] || got[2] != want[2] {
+		t.Fatalf("stale border drag resized panes: %v", got)
+	}
+}

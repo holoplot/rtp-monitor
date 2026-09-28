@@ -18,6 +18,7 @@ func (a *App) handleMouse(msg tea.MouseMsg) tea.Cmd {
 
 	switch msg.(type) {
 	case tea.MouseClickMsg:
+		a.resetDrag() // a release may have been lost, e.g. outside the window
 		if m.Button != tea.MouseLeft {
 			return nil
 		}
@@ -56,8 +57,7 @@ func (a *App) handleMouse(msg tea.MouseMsg) tea.Cmd {
 			if id, ok := a.tree.PaneAt(m.X, m.Y); ok && id != *a.paneDrag {
 				a.tree.SwapPanes(*a.paneDrag, id)
 			}
-			a.paneDrag, a.dropTarget = nil, nil
-			a.status, a.statusUntil = "", time.Time{}
+			a.resetDrag()
 		}
 
 	case tea.MouseWheelMsg:
@@ -74,4 +74,12 @@ func (a *App) handleMouse(msg tea.MouseMsg) tea.Cmd {
 	}
 
 	return nil
+}
+
+// resetDrag ends any border or pane drag and removes the drag hint.
+func (a *App) resetDrag() {
+	a.drag, a.paneDrag, a.dropTarget = nil, nil, nil
+	if a.status == dragHint {
+		a.status, a.statusUntil = "", time.Time{}
+	}
 }
