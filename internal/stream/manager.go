@@ -73,20 +73,26 @@ func NewManager(ifis []*net.Interface) *Manager {
 }
 
 func (m *Manager) update() {
-	if m.updateCallback == nil {
+	m.mutex.Lock()
+	callback := m.updateCallback
+	if callback == nil {
+		m.mutex.Unlock()
 		return
 	}
-
-	m.mutex.Lock()
-
-	streams := make([]*Stream, 0, len(m.streams))
-	for _, stream := range m.streams {
-		streams = append(streams, stream)
-	}
-
+	streams := m.snapshotsLocked()
 	m.mutex.Unlock()
 
-	// Sort by name, with ID as secondary sort key
+	callback(streams)
+}
+
+// snapshotsLocked returns snapshots of all streams, sorted by name with the
+// ID as secondary key. m.mutex must be held.
+func (m *Manager) snapshotsLocked() []*Stream {
+	streams := make([]*Stream, 0, len(m.streams))
+	for _, stream := range m.streams {
+		streams = append(streams, stream.snapshot())
+	}
+
 	sort.Slice(streams, func(i, j int) bool {
 		nameA := streams[i].Name()
 		nameB := streams[j].Name()
@@ -96,11 +102,13 @@ func (m *Manager) update() {
 		return nameA < nameB
 	})
 
-	m.updateCallback(streams)
+	return streams
 }
 
 func (m *Manager) OnUpdate(callback UpdateCallback) {
+	m.mutex.Lock()
 	m.updateCallback = callback
+	m.mutex.Unlock()
 }
 
 func readRTSP(uri string) ([]byte, error) {
@@ -293,10 +301,11 @@ func (m *Manager) AddStreamFromSDP(sdp []byte, discoveryMethod DiscoveryMethod, 
 		existing.Description = *description
 		existing.SDP = sdp
 		existing.AddOrRefreshDiscovery(discoveryMethod, source)
+		snapshot := existing.snapshot()
 		m.mutex.Unlock()
 
 		m.update()
-		return existing, nil
+		return snapshot, nil
 	}
 
 	stream := &Stream{
@@ -311,10 +320,11 @@ func (m *Manager) AddStreamFromSDP(sdp []byte, discoveryMethod DiscoveryMethod, 
 		manager: m,
 	}
 	m.streams[uniqueID] = stream
+	snapshot := stream.snapshot()
 	m.mutex.Unlock()
 
 	m.update()
-	return stream, nil
+	return snapshot, nil
 }
 
 // RemoveStream removes a stream from the manager
@@ -326,26 +336,25 @@ func (m *Manager) RemoveStream(id string) {
 	m.update()
 }
 
-// GetStream returns a stream by ID
+// GetStream returns a snapshot of the stream with the given ID
 func (m *Manager) GetStream(id string) (*Stream, bool) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
 	stream, exists := m.streams[id]
-	return stream, exists
+	if !exists {
+		return nil, false
+	}
+
+	return stream.snapshot(), true
 }
 
-// GetAllStreams returns all streams as a slice, sorted by name
+// GetAllStreams returns snapshots of all streams, sorted by name
 func (m *Manager) GetAllStreams() []*Stream {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	streams := make([]*Stream, 0, len(m.streams))
-	for _, stream := range m.streams {
-		streams = append(streams, stream)
-	}
-
-	return streams
+	return m.snapshotsLocked()
 }
 
 // cleanupStaleStreams expires individual SAP discovery records after sapTimeout

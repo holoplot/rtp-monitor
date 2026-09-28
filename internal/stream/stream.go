@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"net"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -193,6 +194,16 @@ func (s *Stream) Name() string {
 
 func (s *Stream) IDHash() string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(s.ID)))[:10]
+}
+
+// snapshot returns a copy of s that shares no mutable state with s. The
+// manager hands out snapshots so readers never race with discovery updates.
+func (s *Stream) snapshot() *Stream {
+	c := *s
+	c.Description.Sources = slices.Clone(s.Description.Sources)
+	c.SDP = slices.Clone(s.SDP)
+	c.Discoveries = slices.Clone(s.Discoveries)
+	return &c
 }
 
 // findDiscovery returns the index of a matching (method, source) record, or -1.
