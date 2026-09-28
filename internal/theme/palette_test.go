@@ -14,7 +14,7 @@ func TestPaletteComplete(t *testing.T) {
 			t.Errorf("Palette.%s is not set", v.Type().Field(i).Name)
 		}
 	}
-	if !reflect.DeepEqual(UI.PaneBorderFocused, lipgloss.Color(monokaiColors.Blue)) {
-		t.Errorf("PaneBorderFocused = %v, want %s", UI.PaneBorderFocused, monokaiColors.Blue)
+	if !reflect.DeepEqual(UI.PaneBorderFocused, lipgloss.Color(tokyoNightColors.Blue)) {
+		t.Errorf("PaneBorderFocused = %v, want %s", UI.PaneBorderFocused, tokyoNightColors.Blue)
 	}
 }

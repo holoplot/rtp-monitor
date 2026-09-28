@@ -31,14 +31,14 @@ type baseColors struct {
 	Blue, Green, Orange, Magenta, Red, Yellow string
 }
 
-var monokaiColors = baseColors{
-	Bg: "#272822", Fg: "#F8F8F2", Muted: "#75715E", Surface: "#3E3D32",
-	Blue: "#66D9EF", Green: "#A6E22E", Orange: "#FD971F", Magenta: "#AE81FF",
-	Red: "#F92672", Yellow: "#E6DB74",
+var tokyoNightColors = baseColors{
+	Bg: "#1A1B26", Fg: "#C0CAF5", Muted: "#565F89", Surface: "#292E42",
+	Blue: "#7AA2F7", Green: "#9ECE6A", Orange: "#FF9E64", Magenta: "#BB9AF7",
+	Red: "#F7768E", Yellow: "#E0AF68",
 }
 
 // UI is the palette used by the pane UI.
-var UI = newPalette(monokaiColors)
+var UI = newPalette(tokyoNightColors)
 
 func newPalette(b baseColors) Palette {
 	c := lipgloss.Color
