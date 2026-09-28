@@ -69,7 +69,7 @@ func init() {
 func run(cmd *cobra.Command, args []string) error {
 	// Validate headless mode flags
 	if !headless && len(monitorIDs) > 0 {
-		return fmt.Errorf("--monitor-id can only be used with --headless")
+		return fmt.Errorf("--hash can only be used with --headless")
 	}
 
 	var ifis []net.Interface
