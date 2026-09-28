@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -135,6 +136,14 @@ func (a *App) View() tea.View {
 
 func (a *App) handleKey(k tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	key := k.String()
+	if a.confirmQuit {
+		a.confirmQuit = false
+		a.status, a.statusUntil = "", time.Time{}
+		if key == "y" {
+			return a.quit()
+		}
+		return a, nil
+	}
 	if key == "ctrl+c" {
 		return a.requestQuit()
 	}
@@ -303,7 +312,23 @@ func (a *App) setStatus(s string) {
 }
 
 func (a *App) requestQuit() (tea.Model, tea.Cmd) {
-	return a.quit()
+	n := 0
+	for _, p := range a.panes {
+		if p.Kind() == pane.KindRecord {
+			n++
+		}
+	}
+	if n == 0 {
+		return a.quit()
+	}
+
+	noun := "recordings"
+	if n == 1 {
+		noun = "recording"
+	}
+	a.confirmQuit = true
+	a.status, a.statusUntil = fmt.Sprintf("%d %s active, quit? y/n", n, noun), time.Time{}
+	return a, nil
 }
 
 func (a *App) quit() (tea.Model, tea.Cmd) {
