@@ -130,11 +130,12 @@ pane that lists all discovered streams. Opening a view for a stream adds a
 pane. Each pane is bound to one stream, so you can for example watch the
 meters of one stream while recording two others.
 
-Panes survive their stream disappearing: the border turns red, the title says
-`gone`, and the pane reattaches when the stream is announced again. A record
-pane keeps writing while packets arrive and starts new files if the stream's
-format changes. WAV files cannot exceed 4 GiB, so long recordings are split
-before they reach that size and continue in files with a `.1`, `.2`, … suffix.
+Panes survive their stream disappearing: the border turns red (unless the pane
+is focused), the title says `gone`, and the pane reattaches when the stream is
+announced again. A record pane keeps writing while packets arrive and starts
+new files if the stream's format changes. WAV files cannot exceed 4 GiB, so
+long recordings are split before they reach that size and continue in files
+with a `.1`, `.2`, … suffix.
 
 ### Modes
 
@@ -145,7 +146,7 @@ shows the current mode and its keys. `Esc` or `Enter` returns to Normal mode.
 |---|---|---|
 | Normal | | keys go to the focused pane · `Tab` / `Shift+Tab` cycle focus · `c` copy · `Ctrl+c` quit |
 | Pane | `Ctrl+w` | `←↓↑→` / `hjkl` move focus · `x` close · `f` zoom · `t` flip split direction · `c` copy · `r` Resize mode · `m` Move mode |
-| Resize | `r` in Pane mode | `←↓↑→` / `hjkl` grow toward a side · `HJKL` shrink · `+` / `-` grow / shrink |
+| Resize | `r` in Pane mode | `←↓↑→` / `hjkl` grow toward a side · `HJKL` shrink · `+` or `=` / `-` grow / shrink |
 | Move | `m` in Pane mode | `←↓↑→` / `hjkl` swap with a neighbour · `Tab` swap with the next pane |
 
 `Ctrl+w` also leaves any mode. The key scheme avoids zellij's and tmux's
