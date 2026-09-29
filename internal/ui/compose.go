@@ -42,11 +42,16 @@ func (a *App) renderPane(id layout.PaneID, r layout.Rect) string {
 	}
 
 	p := a.panes[id]
-	c := a.borderColor(id, p)
+	c := a.borderColor(id)
 	border := lipgloss.NewStyle().Foreground(c)
 	title := lipgloss.NewStyle().Foreground(theme.UI.PaneTitle).Bold(id == a.tree.Focus())
 
 	content := pane.Fit(p.View(r.W-2, r.H-2), r.W-2, r.H-2)
+	if p.Offline() {
+		// Grey out panes whose stream vanished: drop their colours.
+		title = title.Foreground(theme.UI.Muted)
+		content = lipgloss.NewStyle().Foreground(theme.UI.Muted).Render(ansi.Strip(content))
+	}
 	body := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder(), false, true, true, true).
 		BorderForeground(c).
@@ -57,7 +62,7 @@ func (a *App) renderPane(id layout.PaneID, r layout.Rect) string {
 	return titleBar(p.Title(), r.W, border, title) + "\n" + body
 }
 
-func (a *App) borderColor(id layout.PaneID, p pane.Pane) color.Color {
+func (a *App) borderColor(id layout.PaneID) color.Color {
 	switch {
 	case a.dropTarget != nil && *a.dropTarget == id:
 		return theme.UI.PaneBorderFlash
@@ -65,8 +70,6 @@ func (a *App) borderColor(id layout.PaneID, p pane.Pane) color.Color {
 		return theme.UI.PaneBorderFlash
 	case id == a.tree.Focus():
 		return theme.UI.PaneBorderFocused
-	case p.Offline():
-		return theme.UI.PaneBorderOffline
 	default:
 		return theme.UI.PaneBorder
 	}
