@@ -125,10 +125,11 @@ Flags:
 
 ## Terminal UI
 
-The UI is a tiling layout of panes, similar to zellij. It starts with a single
-pane that lists all discovered streams. Opening a view for a stream adds a
-pane. Each pane is bound to one stream, so you can for example watch the
-meters of one stream while recording two others.
+The UI is a tiling layout of panes, similar to zellij. Each pane is bound to
+one stream, so you can for example watch the meters of one stream while
+recording two others. New panes are opened from the stream picker, a floating
+list of all discovered streams. Discovery runs all the time, whether the picker
+is shown or not.
 
 Panes survive their stream disappearing: the pane is greyed out, the title says
 `offline`, and the pane reattaches when the stream is announced again. A
@@ -144,7 +145,7 @@ shows the current mode and its keys. `Esc` or `Enter` returns to Normal mode.
 
 | Mode | Enter with | Keys |
 |---|---|---|
-| Normal | | keys go to the focused pane · `Tab` / `Shift+Tab` cycle focus · `c` copy · `Ctrl+c` quit |
+| Normal | | keys go to the focused pane · `n` stream picker · `Tab` / `Shift+Tab` cycle focus · `c` copy · `q` or `Ctrl+c` quit |
 | Pane | `Ctrl+w` | `←↓↑→` / `hjkl` move focus · `x` close · `f` zoom · `t` flip split direction · `c` copy · `r` Resize mode · `m` Move mode |
 | Resize | `r` in Pane mode | `←↓↑→` / `hjkl` grow toward a side · `HJKL` shrink · `+` or `=` / `-` grow / shrink |
 | Move | `m` in Pane mode | `←↓↑→` / `hjkl` swap with a neighbour · `Tab` swap with the next pane |
@@ -152,15 +153,19 @@ shows the current mode and its keys. `Esc` or `Enter` returns to Normal mode.
 `Ctrl+w` also leaves any mode. The key scheme avoids zellij's and tmux's
 default bindings, so rtp-monitor runs inside either without conflicts.
 
-### Stream list
+### Stream picker
+
+`n` opens the picker over the panes. It opens by itself at startup and when the
+last pane is closed, and stays open while no pane is open.
 
 - `↑`/`k`, `↓`/`j`, `Page Up`, `Page Down`, `Home`, `End`: select a stream
 - `m`: meters · `R`: record WAV files · `d`: details · `s`: SDP · `r`: RTCP log · `f`: FPGA RX (Linux with the Ravenna FPGA device only)
 - `c`: copy the selected stream's SDP to the clipboard
+- `Esc` or `n`: close the picker
 - `q`: quit
 
-New panes are placed automatically by splitting the largest pane. Focus stays
-on the stream list, so you can open several panes in a row.
+New panes are placed automatically by splitting the largest pane. The picker
+stays open, so you can open several panes in a row.
 
 ### Other panes
 
@@ -170,7 +175,8 @@ on the stream list, so you can open several panes in a row.
 
 ### Mouse
 
-- Click a pane to focus it; click a row in the stream list to select it
+- Click a pane to focus it; click a row in the stream picker to select it, or
+  outside the picker to close it
 - Drag the border between two panes to resize them
 - Drag a pane by its title bar onto another pane to swap them
 - Use the mouse wheel to scroll the pane under the pointer
