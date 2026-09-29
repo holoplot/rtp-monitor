@@ -15,9 +15,9 @@ type Palette struct {
 	RowSelectedFg, RowSelectedBg color.Color
 	ScrollBar, ScrollBarThumb    color.Color
 
-	PaneBorder, PaneBorderFocused   color.Color
-	PaneBorderGone, PaneBorderFlash color.Color
-	PaneTitle                       color.Color
+	PaneBorder, PaneBorderFocused      color.Color
+	PaneBorderOffline, PaneBorderFlash color.Color
+	PaneTitle                          color.Color
 
 	StatusBarFg, StatusBarBg                   color.Color
 	ModeNormal, ModePane, ModeResize, ModeMove color.Color
@@ -50,7 +50,7 @@ func newPalette(b baseColors) Palette {
 		ScrollBar: c(b.Muted), ScrollBarThumb: c(b.Magenta),
 
 		PaneBorder: c(b.Muted), PaneBorderFocused: c(b.Blue),
-		PaneBorderGone: c(b.Red), PaneBorderFlash: c(b.Orange),
+		PaneBorderOffline: c(b.Red), PaneBorderFlash: c(b.Orange),
 		PaneTitle: c(b.Fg),
 
 		StatusBarFg: c(b.Fg), StatusBarBg: c(b.Surface),

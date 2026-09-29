@@ -66,7 +66,7 @@ func TestDetailsRestartsOnTransportChange(t *testing.T) {
 	}
 
 	d.SetStream(nil)
-	if !d.Gone() {
-		t.Fatal("not gone")
+	if !d.Offline() {
+		t.Fatal("not offline")
 	}
 }

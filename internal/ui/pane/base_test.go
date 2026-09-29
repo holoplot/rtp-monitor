@@ -88,14 +88,14 @@ func TestBindAndTitle(t *testing.T) {
 		t.Fatalf("title %q, id %q, kind %v", b.Title(), b.StreamID(), b.Kind())
 	}
 
-	if b.bind(nil) != stream.DescriptionUnchanged || !b.Gone() || b.Title() != "Meters · Alpha · gone" {
-		t.Fatalf("after bind(nil): gone=%v title=%q", b.Gone(), b.Title())
+	if b.bind(nil) != stream.DescriptionUnchanged || !b.Offline() || b.Title() != "Meters · Alpha · offline" {
+		t.Fatalf("after bind(nil): offline=%v title=%q", b.Offline(), b.Title())
 	}
 
 	s2 := testStream()
 	s2.Description.ChannelCount = 8
-	if got := b.bind(s2); got != stream.DescriptionFormatChanged || b.Gone() {
-		t.Fatalf("bind(changed) = %v, gone = %v", got, b.Gone())
+	if got := b.bind(s2); got != stream.DescriptionFormatChanged || b.Offline() {
+		t.Fatalf("bind(changed) = %v, offline = %v", got, b.Offline())
 	}
 }
 

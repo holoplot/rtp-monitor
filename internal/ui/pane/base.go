@@ -7,12 +7,12 @@ import (
 	"github.com/holoplot/rtp-monitor/internal/stream"
 )
 
-// base implements stream binding, the gone state and scrolling for panes
+// base implements stream binding, the offline state and scrolling for panes
 // bound to one stream. Panes embed it.
 type base struct {
-	kind   Kind
-	stream *stream.Stream // latest snapshot; kept while the stream is gone
-	gone   bool
+	kind    Kind
+	stream  *stream.Stream // latest snapshot; kept while the stream is offline
+	offline bool
 
 	scroll     int
 	follow     bool // log panes: stay at the bottom while pinned there
@@ -27,25 +27,25 @@ func newBase(kind Kind, s *stream.Stream) base {
 
 func (b *base) Kind() Kind       { return b.kind }
 func (b *base) StreamID() string { return b.stream.ID }
-func (b *base) Gone() bool       { return b.gone }
+func (b *base) Offline() bool    { return b.offline }
 
 func (b *base) Title() string {
 	title := b.kind.String() + " · " + sanitize(b.stream.Name())
-	if b.gone {
-		title += " · gone"
+	if b.offline {
+		title += " · offline"
 	}
 	return title
 }
 
 // bind stores a new snapshot and reports how its description differs from
-// the previous one. nil marks the stream as gone and keeps the old snapshot.
+// the previous one. nil marks the stream as offline and keeps the old snapshot.
 func (b *base) bind(s *stream.Stream) stream.DescriptionChange {
 	if s == nil {
-		b.gone = true
+		b.offline = true
 		return stream.DescriptionUnchanged
 	}
 	change := stream.CompareDescriptions(b.stream.Description, s.Description)
-	b.stream, b.gone = s, false
+	b.stream, b.offline = s, false
 	return change
 }
 

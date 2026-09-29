@@ -12,28 +12,28 @@ import (
 )
 
 type fakePane struct {
-	kind   pane.Kind
-	s      *stream.Stream
-	gone   bool
-	closed bool
-	closes int
-	msgs   []tea.Msg
+	kind    pane.Kind
+	s       *stream.Stream
+	offline bool
+	closed  bool
+	closes  int
+	msgs    []tea.Msg
 }
 
 func (f *fakePane) Kind() pane.Kind      { return f.kind }
 func (f *fakePane) Title() string        { return f.kind.String() + " · " + f.s.Name() }
 func (f *fakePane) StreamID() string     { return f.s.ID }
-func (f *fakePane) Gone() bool           { return f.gone }
+func (f *fakePane) Offline() bool        { return f.offline }
 func (f *fakePane) View(_, _ int) string { return "fake" }
 func (f *fakePane) CopyText() string     { return "copy of " + f.s.Name() }
 func (f *fakePane) Close()               { f.closed = true; f.closes++ }
 
 func (f *fakePane) SetStream(s *stream.Stream) {
 	if s == nil {
-		f.gone = true
+		f.offline = true
 		return
 	}
-	f.s, f.gone = s, false
+	f.s, f.offline = s, false
 }
 
 func (f *fakePane) Update(msg tea.Msg) tea.Cmd {
@@ -150,11 +150,11 @@ func TestPanesFollowStreamPresence(t *testing.T) {
 	h.press("m")
 
 	h.send(UpdateStreamsMsg{Streams: testStreams()[1:]})
-	if !h.panes[0].gone {
-		t.Fatal("pane not gone")
+	if !h.panes[0].offline {
+		t.Fatal("pane not offline")
 	}
 	h.send(UpdateStreamsMsg{Streams: testStreams()})
-	if h.panes[0].gone {
+	if h.panes[0].offline {
 		t.Fatal("pane did not reattach")
 	}
 }
@@ -236,8 +236,8 @@ func TestAllStreamsVanish(t *testing.T) {
 	h.press("m")
 
 	h.send(UpdateStreamsMsg{})
-	if !h.panes[0].gone {
-		t.Fatal("pane not gone")
+	if !h.panes[0].offline {
+		t.Fatal("pane not offline")
 	}
 	h.press("m")
 	if len(h.panes) != 1 {
@@ -253,7 +253,7 @@ func TestInitialSnapshotAfterLiveUpdateIgnored(t *testing.T) {
 	h.press("m")
 
 	h.send(UpdateStreamsMsg{Streams: testStreams()[1:], Initial: true})
-	if h.panes[0].gone || !strings.Contains(h.screen(), "Streams (2)") {
+	if h.panes[0].offline || !strings.Contains(h.screen(), "Streams (2)") {
 		t.Fatalf("stale initial snapshot applied:\n%s", h.screen())
 	}
 

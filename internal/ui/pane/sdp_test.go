@@ -16,8 +16,8 @@ func TestSDPPane(t *testing.T) {
 	}
 
 	p.SetStream(nil)
-	if !p.Gone() || p.Title() != "SDP · Alpha · gone" {
-		t.Errorf("gone=%v title=%q", p.Gone(), p.Title())
+	if !p.Offline() || p.Title() != "SDP · Alpha · offline" {
+		t.Errorf("offline=%v title=%q", p.Offline(), p.Title())
 	}
 
 	s2 := testStream()

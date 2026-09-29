@@ -37,7 +37,7 @@ func NewStreamList(fpgaAvailable bool) *StreamList {
 func (l *StreamList) Kind() Kind               { return KindStreamList }
 func (l *StreamList) Title() string            { return fmt.Sprintf("Streams (%d)", len(l.streams)) }
 func (l *StreamList) StreamID() string         { return "" }
-func (l *StreamList) Gone() bool               { return false }
+func (l *StreamList) Offline() bool            { return false }
 func (l *StreamList) SetStream(*stream.Stream) {}
 func (l *StreamList) Close()                   {}
 

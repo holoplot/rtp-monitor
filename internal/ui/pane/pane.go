@@ -51,9 +51,9 @@ type Pane interface {
 	Title() string
 	// StreamID is the ID of the bound stream, "" for the stream list.
 	StreamID() string
-	// Gone reports whether the bound stream is currently not announced.
-	Gone() bool
-	// SetStream passes the current snapshot of the bound stream, nil if gone.
+	// Offline reports whether the bound stream is currently not announced.
+	Offline() bool
+	// SetStream passes the current snapshot of the bound stream, nil if offline.
 	SetStream(s *stream.Stream)
 	// Update receives TickMsg (all panes), keys (focused pane), ScrollMsg
 	// (pane under the mouse) and ClickMsg.

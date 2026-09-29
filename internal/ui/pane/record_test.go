@@ -62,8 +62,8 @@ func TestRecordTransportChangeKeepsFiles(t *testing.T) {
 	}
 
 	r.SetStream(nil)
-	if !r.Gone() || r.state.recorders[0] != rec {
-		t.Fatal("gone stream stopped the recording")
+	if !r.Offline() || r.state.recorders[0] != rec {
+		t.Fatal("offline stream stopped the recording")
 	}
 }
 

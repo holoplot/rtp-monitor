@@ -61,7 +61,7 @@ func TestMessagesIgnoredAfterQuit(t *testing.T) {
 	}
 
 	h.send(UpdateStreamsMsg{})
-	if h.panes[0].gone {
+	if h.panes[0].offline {
 		t.Fatal("stream update reached a pane after quit")
 	}
 	h.send(tea.MouseWheelMsg{X: 70, Y: 10, Button: tea.MouseWheelDown})

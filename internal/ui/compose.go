@@ -65,8 +65,8 @@ func (a *App) borderColor(id layout.PaneID, p pane.Pane) color.Color {
 		return theme.UI.PaneBorderFlash
 	case id == a.tree.Focus():
 		return theme.UI.PaneBorderFocused
-	case p.Gone():
-		return theme.UI.PaneBorderGone
+	case p.Offline():
+		return theme.UI.PaneBorderOffline
 	default:
 		return theme.UI.PaneBorder
 	}
