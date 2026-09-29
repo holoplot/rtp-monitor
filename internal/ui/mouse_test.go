@@ -9,30 +9,44 @@ import (
 	"github.com/holoplot/rtp-monitor/internal/ui/pane"
 )
 
-func TestClickFocusesAndSelects(t *testing.T) {
+func TestClickFocuses(t *testing.T) {
 	h := newHarness(t, 120, 41)
-	h.press("m") // list {0,0,60,40} | meters {60,0,60,40}
+	h.press("m", "m", "esc") // {0,0,60,40} | {60,0,60,40}
 
 	h.send(tea.MouseClickMsg{X: 70, Y: 10, Button: tea.MouseLeft})
 	if h.app.tree.Focus() != 2 {
 		t.Fatalf("focus = %d, want 2", h.app.tree.Focus())
 	}
 
-	// Screen rows of the list: 0 border, 1 header, 2 Alpha, 3 Beta.
-	h.send(tea.MouseClickMsg{X: 5, Y: 3, Button: tea.MouseLeft})
-	if h.app.tree.Focus() != 1 || h.app.list.Selected().ID != "beta" {
-		t.Fatalf("focus %d, selected %q", h.app.tree.Focus(), h.app.list.Selected().ID)
+	h.send(tea.MouseClickMsg{X: 5, Y: 40, Button: tea.MouseLeft}) // status bar
+	if h.app.tree.Focus() != 2 {
+		t.Fatal("click on the status bar changed focus")
+	}
+}
+
+func TestPickerMouse(t *testing.T) {
+	h := newHarness(t, 120, 41)
+
+	// Picker {2,17,116,5}: 17 title, 18 header, 19 Alpha, 20 Beta.
+	h.send(tea.MouseClickMsg{X: 10, Y: 20, Button: tea.MouseLeft})
+	if h.app.list.Selected().ID != "beta" {
+		t.Fatalf("selected %q, want beta", h.app.list.Selected().ID)
+	}
+	h.send(tea.MouseClickMsg{X: 10, Y: 5, Button: tea.MouseLeft})
+	if !h.app.picker {
+		t.Fatal("click outside closed the picker without panes")
 	}
 
-	h.send(tea.MouseClickMsg{X: 5, Y: 40, Button: tea.MouseLeft}) // status bar
-	if h.app.tree.Focus() != 1 {
-		t.Fatal("click on the status bar changed focus")
+	h.press("m")
+	h.send(tea.MouseClickMsg{X: 10, Y: 5, Button: tea.MouseLeft})
+	if h.app.picker || h.app.tree.Focus() != 1 {
+		t.Fatalf("click outside: picker %v, focus %d", h.app.picker, h.app.tree.Focus())
 	}
 }
 
 func TestDragBorder(t *testing.T) {
 	h := newHarness(t, 120, 41)
-	h.press("m")
+	h.press("m", "m", "esc") // {0,0,60,40} | {60,0,60,40}
 
 	h.send(tea.MouseClickMsg{X: 59, Y: 10, Button: tea.MouseLeft})
 	h.send(tea.MouseMotionMsg{X: 79, Y: 10, Button: tea.MouseLeft})
@@ -48,7 +62,7 @@ func TestDragBorder(t *testing.T) {
 
 func TestDragPaneTitleSwaps(t *testing.T) {
 	h := newHarness(t, 120, 41)
-	h.press("m") // list {0,0,60,40} | meters {60,0,60,40}
+	h.press("m", "m", "esc") // {0,0,60,40} | {60,0,60,40}
 
 	h.send(tea.MouseClickMsg{X: 70, Y: 0, Button: tea.MouseLeft})
 	h.send(tea.MouseMotionMsg{X: 10, Y: 10, Button: tea.MouseLeft})
@@ -74,7 +88,7 @@ func TestDragPaneTitleSwaps(t *testing.T) {
 
 func TestDragPaneTitleReleaseOnSourceCancels(t *testing.T) {
 	h := newHarness(t, 120, 41)
-	h.press("m")
+	h.press("m", "m", "esc") // {0,0,60,40} | {60,0,60,40}
 
 	h.send(tea.MouseClickMsg{X: 70, Y: 0, Button: tea.MouseLeft})
 	h.send(tea.MouseReleaseMsg{X: 80, Y: 10, Button: tea.MouseLeft})
@@ -93,7 +107,7 @@ func TestDragPaneTitleReleaseOnSourceCancels(t *testing.T) {
 
 func TestDragPaneTitleReleaseOutsidePanesCancels(t *testing.T) {
 	h := newHarness(t, 120, 41)
-	h.press("m")
+	h.press("m", "m", "esc") // {0,0,60,40} | {60,0,60,40}
 
 	h.send(tea.MouseClickMsg{X: 70, Y: 0, Button: tea.MouseLeft})
 	h.send(tea.MouseMotionMsg{X: 10, Y: 10, Button: tea.MouseLeft})
@@ -110,8 +124,8 @@ func TestDragPaneTitleReleaseOutsidePanesCancels(t *testing.T) {
 
 func TestDragPaneTitleDisabledWhileZoomed(t *testing.T) {
 	h := newHarness(t, 120, 41)
-	h.press("m")
-	h.press("ctrl+w", "f", "esc") // zoom in on the focused (list) pane
+	h.press("m", "m", "esc")      // {0,0,60,40} | {60,0,60,40}
+	h.press("ctrl+w", "f", "esc") // zoom in on the focused pane 1
 
 	h.send(tea.MouseClickMsg{X: 70, Y: 0, Button: tea.MouseLeft})
 	h.send(tea.MouseMotionMsg{X: 10, Y: 10, Button: tea.MouseLeft})
@@ -130,11 +144,11 @@ func TestDragPaneTitleDisabledWhileZoomed(t *testing.T) {
 
 func TestWheelScrollsPaneUnderPointer(t *testing.T) {
 	h := newHarness(t, 120, 41)
-	h.press("m")
+	h.press("m", "m", "esc") // {0,0,60,40} | {60,0,60,40}
 
 	h.send(tea.MouseWheelMsg{X: 70, Y: 10, Button: tea.MouseWheelDown})
 	h.send(tea.MouseWheelMsg{X: 70, Y: 10, Button: tea.MouseWheelUp})
-	msgs := h.panes[0].msgs
+	msgs := h.panes[1].msgs
 	if len(msgs) != 2 || msgs[0] != (pane.ScrollMsg{Lines: 3}) || msgs[1] != (pane.ScrollMsg{Lines: -3}) {
 		t.Fatalf("pane got %v", msgs)
 	}
@@ -145,7 +159,7 @@ func TestWheelScrollsPaneUnderPointer(t *testing.T) {
 
 func TestClickResetsStaleDrag(t *testing.T) {
 	h := newHarness(t, 120, 41)
-	h.press("m")
+	h.press("m", "m", "esc") // {0,0,60,40} | {60,0,60,40}
 	want := map[layout.PaneID]layout.Rect{
 		1: {X: 0, Y: 0, W: 60, H: 40},
 		2: {X: 60, Y: 0, W: 60, H: 40},

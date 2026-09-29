@@ -15,8 +15,8 @@ func TestNewCreatesEveryKind(t *testing.T) {
 
 	defer func() {
 		if recover() == nil {
-			t.Error("New(KindStreamList) did not panic")
+			t.Error("New(Kind(-1)) did not panic")
 		}
 	}()
-	New(KindStreamList, testStream(), ctx)
+	New(Kind(-1), testStream(), ctx)
 }

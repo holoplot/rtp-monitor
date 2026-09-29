@@ -14,8 +14,7 @@ import (
 type Kind int
 
 const (
-	KindStreamList Kind = iota
-	KindDetails
+	KindDetails Kind = iota
 	KindMeters
 	KindSDP
 	KindRTCP
@@ -25,8 +24,6 @@ const (
 
 func (k Kind) String() string {
 	switch k {
-	case KindStreamList:
-		return "Streams"
 	case KindDetails:
 		return "Details"
 	case KindMeters:
@@ -49,7 +46,7 @@ type Pane interface {
 	Kind() Kind
 	// Title is shown in the pane's top border, e.g. "Meters · Studio A".
 	Title() string
-	// StreamID is the ID of the bound stream, "" for the stream list.
+	// StreamID is the ID of the bound stream.
 	StreamID() string
 	// Offline reports whether the bound stream is currently not announced.
 	Offline() bool

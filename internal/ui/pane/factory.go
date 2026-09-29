@@ -6,8 +6,7 @@ import (
 	"github.com/holoplot/rtp-monitor/internal/stream"
 )
 
-// New creates a pane of the given kind for stream s. The stream list is
-// created with NewStreamList instead.
+// New creates a pane of the given kind for stream s.
 func New(kind Kind, s *stream.Stream, ctx Context) Pane {
 	switch kind {
 	case KindDetails:

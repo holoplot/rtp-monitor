@@ -29,16 +29,10 @@ func TestTitleBarWidth(t *testing.T) {
 
 func TestOfflinePaneGreyedOut(t *testing.T) {
 	h := newHarness(t, 120, 41)
-	h.press("m")
-	var id layout.PaneID
-	for pid := range h.rects() {
-		if pid != h.app.listID {
-			id = pid
-		}
-	}
-	h.app.tree.SetFocus(h.app.listID)
+	h.press("m", "down", "m", "esc") // Alpha (focused) | Beta
+	id := layout.PaneID(2)
 	delete(h.app.flash, id)
-	h.send(UpdateStreamsMsg{})
+	h.send(UpdateStreamsMsg{Streams: testStreams()[:1]})
 
 	muted := lipgloss.NewStyle().Foreground(theme.UI.Muted).Render("x")
 	mutedSeq := muted[:strings.Index(muted, "x")]

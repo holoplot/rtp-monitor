@@ -9,6 +9,7 @@ import (
 
 func TestModeSwitching(t *testing.T) {
 	h := newHarness(t, 120, 41)
+	h.press("m", "esc")
 	for _, step := range []struct {
 		key  string
 		want Mode
@@ -37,7 +38,7 @@ func TestModeSwitching(t *testing.T) {
 
 func TestPaneMode(t *testing.T) {
 	h := newHarness(t, 120, 41)
-	h.press("m") // 1 | 2
+	h.press("m", "m", "esc") // {0,0,60,40} | {60,0,60,40}
 
 	h.press("ctrl+w", "l")
 	if h.app.tree.Focus() != 2 {
@@ -54,30 +55,30 @@ func TestPaneMode(t *testing.T) {
 	}
 
 	h.press("x")
-	if len(h.rects()) != 2 || !strings.Contains(h.screen(), "cannot be closed") {
-		t.Fatal("closing the stream list was not refused")
-	}
-
-	h.press("l", "x")
-	if !h.panes[0].closed || len(h.rects()) != 1 || h.rects()[1] != (layout.Rect{W: 120, H: 40}) {
+	if !h.panes[0].closed || len(h.rects()) != 1 || h.rects()[2] != (layout.Rect{W: 120, H: 40}) {
 		t.Fatalf("close failed: closed=%v rects=%v", h.panes[0].closed, h.rects())
 	}
-	if len(h.app.panes) != 1 {
-		t.Fatalf("%d panes registered, want 1", len(h.app.panes))
+	if len(h.app.panes) != 1 || h.app.picker {
+		t.Fatalf("%d panes registered, picker %v", len(h.app.panes), h.app.picker)
+	}
+
+	h.press("x") // the last pane
+	if !h.panes[1].closed || len(h.app.panes) != 0 || !h.app.picker || h.app.mode != ModeNormal {
+		t.Fatalf("closing the last pane: panes %d, picker %v, mode %s", len(h.app.panes), h.app.picker, h.app.mode.Label())
 	}
 }
 
 func TestFlipInPaneMode(t *testing.T) {
 	h := newHarness(t, 120, 41)
-	h.press("m", "ctrl+w", "t")
+	h.press("m", "m", "esc", "ctrl+w", "t")
 	if got := h.rects()[1]; got != (layout.Rect{W: 120, H: 20}) {
-		t.Fatalf("list rect after flip = %v", got)
+		t.Fatalf("pane 1 after flip = %v", got)
 	}
 }
 
 func TestResizeAndMoveModes(t *testing.T) {
 	h := newHarness(t, 120, 41)
-	h.press("m") // list {0,0,60,40} | meters {60,0,60,40}
+	h.press("m", "m", "esc") // {0,0,60,40} | {60,0,60,40}
 
 	h.press("ctrl+w", "r", "l")
 	if w := h.rects()[1].W; w != 62 {
@@ -94,10 +95,10 @@ func TestResizeAndMoveModes(t *testing.T) {
 
 	h.press("esc", "ctrl+w", "m", "l")
 	if x := h.rects()[1].X; x != 60 {
-		t.Fatalf("move: list at x=%d, want 60", x)
+		t.Fatalf("move: pane 1 at x=%d, want 60", x)
 	}
 	h.press("tab")
 	if x := h.rects()[1].X; x != 0 {
-		t.Fatalf("swap next: list at x=%d, want 0", x)
+		t.Fatalf("swap next: pane 1 at x=%d, want 0", x)
 	}
 }

@@ -52,7 +52,7 @@ func (m Mode) Help() string {
 	case ModeMove:
 		return "←↓↑→/hjkl swap · tab swap next · esc back"
 	default:
-		return "tab focus · ctrl+w pane/resize/move · c copy · ctrl+c quit · shift+drag selects text"
+		return "n new pane · tab focus · ctrl+w pane/resize/move · c copy · q quit · shift+drag selects text"
 	}
 }
 

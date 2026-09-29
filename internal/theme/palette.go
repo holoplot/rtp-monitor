@@ -20,6 +20,7 @@ type Palette struct {
 
 	StatusBarFg, StatusBarBg                   color.Color
 	ModeNormal, ModePane, ModeResize, ModeMove color.Color
+	ModePicker                                 color.Color
 
 	Active, Error, Warning color.Color
 }
@@ -53,6 +54,7 @@ func newPalette(b baseColors) Palette {
 
 		StatusBarFg: c(b.Fg), StatusBarBg: c(b.Surface),
 		ModeNormal: c(b.Green), ModePane: c(b.Blue), ModeResize: c(b.Orange), ModeMove: c(b.Magenta),
+		ModePicker: c(b.Yellow),
 
 		Active: c(b.Green), Error: c(b.Red), Warning: c(b.Yellow),
 	}

@@ -49,8 +49,8 @@ type App struct {
 	opts   Options
 	tree   *layout.Tree
 	panes  map[layout.PaneID]pane.Pane
-	list   *pane.StreamList
-	listID layout.PaneID
+	list   *pane.StreamList // shown in the picker
+	picker bool             // the stream picker is open
 	nextID layout.PaneID
 
 	mode          Mode
@@ -82,18 +82,16 @@ func NewApp(opts Options) *App {
 		opts.Clipboard = clipboard.WriteString
 	}
 
-	list := pane.NewStreamList(opts.FPGA)
-	a := &App{
+	return &App{
 		opts:   opts,
-		list:   list,
-		listID: 1,
-		nextID: 2,
-		panes:  map[layout.PaneID]pane.Pane{1: list},
+		tree:   layout.NewEmpty(),
+		list:   pane.NewStreamList(opts.FPGA),
+		picker: true,
+		nextID: 1,
+		panes:  map[layout.PaneID]pane.Pane{},
 		flash:  map[layout.PaneID]time.Time{},
 		now:    time.Now,
 	}
-	a.tree = layout.New(a.listID)
-	return a
 }
 
 func (a *App) Init() tea.Cmd {
@@ -167,6 +165,9 @@ func (a *App) handleKey(k tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if key == "ctrl+c" {
 		return a.requestQuit()
 	}
+	if a.picker {
+		return a.pickerKey(k)
+	}
 	if next, ok := modeSwitch(a.mode, key); ok {
 		a.mode = next
 		return a, nil
@@ -204,6 +205,38 @@ func (a *App) paneModeKey(key string) {
 	}
 }
 
+// pickerKey handles keys while the stream picker is open. It is modal: keys
+// do not reach the panes, and mode keys are ignored.
+func (a *App) pickerKey(k tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	switch k.String() {
+	case "esc", "n":
+		a.closePicker()
+		return a, nil
+	case "q":
+		return a.requestQuit()
+	case "c":
+		a.copy(a.list.CopyText())
+		return a, nil
+	case "ctrl+w":
+		return a, nil
+	}
+	return a, a.list.Update(k)
+}
+
+// openPicker shows the stream picker in Normal mode.
+func (a *App) openPicker() {
+	a.picker, a.mode = true, ModeNormal
+	a.resetDrag()
+}
+
+// closePicker hides the stream picker unless no pane is open: the screen is
+// never blank.
+func (a *App) closePicker() {
+	if len(a.panes) > 0 {
+		a.picker = false
+	}
+}
+
 func (a *App) resizeModeKey(key string) {
 	var err error
 	if d, ok := direction(key); ok {
@@ -234,10 +267,6 @@ func (a *App) moveModeKey(key string) {
 }
 
 func (a *App) closePane(id layout.PaneID) {
-	if id == a.listID {
-		a.setStatus("the stream list cannot be closed")
-		return
-	}
 	p, ok := a.panes[id]
 	if !ok {
 		return
@@ -250,6 +279,9 @@ func (a *App) closePane(id layout.PaneID) {
 	delete(a.panes, id)
 	delete(a.flash, id)
 	a.updatePaneCounts()
+	if len(a.panes) == 0 {
+		a.openPicker()
+	}
 }
 
 func (a *App) normalKey(k tea.KeyPressMsg) (tea.Model, tea.Cmd) {
@@ -264,10 +296,11 @@ func (a *App) normalKey(k tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case "c":
 		a.copyFocused()
 		return a, nil
+	case "n":
+		a.openPicker()
+		return a, nil
 	case "q":
-		if focused == a.listID {
-			return a.requestQuit()
-		}
+		return a.requestQuit()
 	}
 	return a, a.panes[focused].Update(k)
 }
@@ -314,7 +347,10 @@ func (a *App) updatePaneCounts() {
 }
 
 func (a *App) copyFocused() {
-	text := a.panes[a.tree.Focus()].CopyText()
+	a.copy(a.panes[a.tree.Focus()].CopyText())
+}
+
+func (a *App) copy(text string) {
 	if text == "" {
 		a.setStatus("nothing to copy")
 		return

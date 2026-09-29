@@ -10,8 +10,7 @@ import (
 	"github.com/holoplot/rtp-monitor/internal/theme"
 )
 
-// StreamList is the table of discovered streams. There is exactly one, and it
-// cannot be closed.
+// StreamList is the table of discovered streams shown in the stream picker.
 type StreamList struct {
 	streams    []*stream.Stream
 	selected   int
@@ -20,8 +19,6 @@ type StreamList struct {
 	paneCounts map[string]int
 	fpga       bool
 }
-
-var _ Pane = (*StreamList)(nil)
 
 var openKeys = map[string]Kind{
 	"m": KindMeters, "R": KindRecord, "d": KindDetails,
@@ -34,12 +31,15 @@ func NewStreamList(fpgaAvailable bool) *StreamList {
 	return &StreamList{fpga: fpgaAvailable, rows: 1}
 }
 
-func (l *StreamList) Kind() Kind               { return KindStreamList }
-func (l *StreamList) Title() string            { return fmt.Sprintf("Streams (%d)", len(l.streams)) }
-func (l *StreamList) StreamID() string         { return "" }
-func (l *StreamList) Offline() bool            { return false }
-func (l *StreamList) SetStream(*stream.Stream) {}
-func (l *StreamList) Close()                   {}
+func (l *StreamList) Title() string { return fmt.Sprintf("Streams (%d)", len(l.streams)) }
+
+// Height is the number of lines the list needs to show every stream.
+func (l *StreamList) Height() int {
+	if len(l.streams) == 0 {
+		return 3 // the empty message
+	}
+	return len(l.streams) + 1 // header
+}
 
 // SetStreams replaces the list. The selected stream stays selected if it is
 // still present; otherwise the first stream is selected.

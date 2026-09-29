@@ -115,25 +115,25 @@ func (h *harness) press(keys ...string) tea.Msg {
 func (h *harness) screen() string                       { return ansi.Strip(h.app.render()) }
 func (h *harness) rects() map[layout.PaneID]layout.Rect { return h.app.tree.Rects() }
 
-func TestOpenPaneFromStreamList(t *testing.T) {
+func TestOpenPanesFromPicker(t *testing.T) {
 	h := newHarness(t, 120, 41)
-	h.press("m")
+	if !h.app.picker || !strings.Contains(h.screen(), "STREAMS") {
+		t.Fatal("picker not open at startup")
+	}
+	h.press("esc")
+	if !h.app.picker {
+		t.Fatal("esc closed the picker without panes")
+	}
 
+	h.press("m")
 	if len(h.panes) != 1 || h.panes[0].kind != pane.KindMeters || h.panes[0].s.ID != "alpha" {
 		t.Fatalf("panes = %+v", h.panes)
 	}
-	want := map[layout.PaneID]layout.Rect{
-		1: {X: 0, Y: 0, W: 60, H: 40},
-		2: {X: 60, Y: 0, W: 60, H: 40},
-	}
-	if got := h.rects(); len(got) != 2 || got[1] != want[1] || got[2] != want[2] {
-		t.Fatalf("rects = %v", got)
-	}
-	if h.app.tree.Focus() != 1 {
-		t.Fatalf("focus = %d, want the stream list", h.app.tree.Focus())
+	if got := h.rects(); len(got) != 1 || got[1] != (layout.Rect{W: 120, H: 40}) || h.app.tree.Focus() != 1 {
+		t.Fatalf("rects = %v, focus %d", got, h.app.tree.Focus())
 	}
 	screen := h.screen()
-	for _, s := range []string{"Streams (2)", "Meters · Alpha", "NORMAL"} {
+	for _, s := range []string{"Streams (2)", "Meters · Alpha", "STREAMS", "esc close"} {
 		if !strings.Contains(screen, s) {
 			t.Errorf("screen lacks %q", s)
 		}
@@ -142,6 +142,27 @@ func TestOpenPaneFromStreamList(t *testing.T) {
 	h.press("down", "R")
 	if len(h.panes) != 2 || h.panes[1].kind != pane.KindRecord || h.panes[1].s.ID != "beta" {
 		t.Fatalf("second pane = %+v", h.panes[1])
+	}
+	if !h.app.picker || h.app.tree.Focus() != 1 {
+		t.Fatalf("picker %v, focus %d", h.app.picker, h.app.tree.Focus())
+	}
+
+	h.press("up", "c")
+	if h.copied != "v=0 alpha" {
+		t.Fatalf("picker copied %q", h.copied)
+	}
+
+	h.press("esc")
+	if h.app.picker || strings.Contains(h.screen(), "Streams (2)") || !strings.Contains(h.screen(), "NORMAL") {
+		t.Fatal("esc did not close the picker")
+	}
+	h.press("n")
+	if !h.app.picker {
+		t.Fatal("n did not open the picker")
+	}
+	h.press("n")
+	if h.app.picker {
+		t.Fatal("n did not close the picker")
 	}
 }
 
@@ -161,37 +182,35 @@ func TestPanesFollowStreamPresence(t *testing.T) {
 
 func TestNormalModeRouting(t *testing.T) {
 	h := newHarness(t, 120, 41)
-	h.press("m", "tab")
+	h.press("m", "down", "m", "esc", "tab")
 	if h.app.tree.Focus() != 2 {
 		t.Fatalf("focus = %d, want 2", h.app.tree.Focus())
 	}
 
-	if msg := h.press("j", "q"); msg != nil {
-		t.Fatalf("q in a stream pane produced %T", msg)
-	}
+	h.press("j", "x")
 	var keys []string
-	for _, m := range h.panes[0].msgs {
+	for _, m := range h.panes[1].msgs {
 		keys = append(keys, m.(tea.KeyPressMsg).String())
 	}
-	if strings.Join(keys, ",") != "j,q" {
-		t.Fatalf("forwarded keys %v, want j,q", keys)
+	if strings.Join(keys, ",") != "j,x" {
+		t.Fatalf("forwarded keys %v, want j,x", keys)
 	}
 
 	h.press("c")
-	if h.copied != "copy of Alpha" {
+	if h.copied != "copy of Beta" {
 		t.Fatalf("copied %q", h.copied)
 	}
 	h.press("shift+tab", "c")
-	if h.app.tree.Focus() != 1 || h.copied != "v=0 alpha" {
+	if h.app.tree.Focus() != 1 || h.copied != "copy of Alpha" {
 		t.Fatalf("focus %d, copied %q", h.app.tree.Focus(), h.copied)
 	}
 }
 
 func TestQuitClosesPanes(t *testing.T) {
 	h := newHarness(t, 120, 41)
-	h.press("m")
+	h.press("m", "esc")
 	if _, ok := h.press("q").(tea.QuitMsg); !ok {
-		t.Fatal("q in the stream list did not quit")
+		t.Fatal("q in a pane did not quit")
 	}
 	if !h.panes[0].closed {
 		t.Fatal("pane not closed on quit")
@@ -205,8 +224,8 @@ func TestQuitClosesPanes(t *testing.T) {
 
 func TestNoRoomStatus(t *testing.T) {
 	h := newHarness(t, 30, 9)
-	h.press("m")
-	if len(h.panes) != 0 {
+	h.press("m", "m")
+	if len(h.panes) != 1 {
 		t.Fatal("pane created without room")
 	}
 	if !strings.Contains(h.screen(), "no room") {
@@ -233,13 +252,13 @@ func TestTinyTerminal(t *testing.T) {
 
 func TestAllStreamsVanish(t *testing.T) {
 	h := newHarness(t, 120, 41)
-	h.press("m")
+	h.press("m", "esc")
 
 	h.send(UpdateStreamsMsg{})
 	if !h.panes[0].offline {
 		t.Fatal("pane not offline")
 	}
-	h.press("m")
+	h.press("n", "m")
 	if len(h.panes) != 1 {
 		t.Fatal("opened a pane without streams")
 	}

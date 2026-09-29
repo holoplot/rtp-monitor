@@ -14,6 +14,9 @@ const dragHint = "drop on a pane to swap · release elsewhere to cancel"
 // handleMouse focuses panes on click, drags borders and sends wheel events to
 // the pane under the pointer.
 func (a *App) handleMouse(msg tea.MouseMsg) tea.Cmd {
+	if a.picker {
+		return a.pickerMouse(msg)
+	}
 	m := msg.Mouse()
 
 	switch msg.(type) {
@@ -70,6 +73,35 @@ func (a *App) handleMouse(msg tea.MouseMsg) tea.Cmd {
 			return a.panes[id].Update(pane.ScrollMsg{Lines: -wheelLines})
 		case tea.MouseWheelDown:
 			return a.panes[id].Update(pane.ScrollMsg{Lines: wheelLines})
+		}
+	}
+
+	return nil
+}
+
+// pickerMouse sends clicks and wheel events inside the picker to the stream
+// list. A click outside closes the picker.
+func (a *App) pickerMouse(msg tea.MouseMsg) tea.Cmd {
+	m := msg.Mouse()
+	r := a.pickerRect()
+
+	switch msg.(type) {
+	case tea.MouseClickMsg:
+		if m.Button != tea.MouseLeft {
+			return nil
+		}
+		if !r.Contains(m.X, m.Y) {
+			a.closePicker()
+			return nil
+		}
+		return a.list.Update(pane.ClickMsg{X: m.X - r.X - 1, Y: m.Y - r.Y - 1})
+
+	case tea.MouseWheelMsg:
+		switch m.Button {
+		case tea.MouseWheelUp:
+			return a.list.Update(pane.ScrollMsg{Lines: -wheelLines})
+		case tea.MouseWheelDown:
+			return a.list.Update(pane.ScrollMsg{Lines: wheelLines})
 		}
 	}
 
