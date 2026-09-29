@@ -39,7 +39,6 @@ const (
 
 var (
 	ErrNoRoom       = errors.New("no room: close or resize a pane")
-	ErrLastPane     = errors.New("the last pane cannot be closed")
 	ErrNoParent     = errors.New("pane is not part of a split")
 	ErrUnknownPane  = errors.New("unknown pane")
 	ErrCannotResize = errors.New("no split to resize in that direction")
@@ -56,6 +55,7 @@ type node struct {
 func (n *node) leaf() bool { return n.first == nil }
 
 // Tree is a binary split tree of panes with a focused pane and optional zoom.
+// It may be empty; then Focus returns 0.
 type Tree struct {
 	root   *node
 	focus  PaneID
@@ -67,6 +67,13 @@ type Tree struct {
 // New returns a tree containing the single pane root, which has focus.
 func New(root PaneID) *Tree {
 	t := &Tree{root: &node{pane: root}, focus: root}
+	t.relayout()
+	return t
+}
+
+// NewEmpty returns a tree without panes.
+func NewEmpty() *Tree {
+	t := &Tree{}
 	t.relayout()
 	return t
 }
@@ -125,6 +132,9 @@ func (t *Tree) Rects() map[PaneID]Rect {
 // CycleFocus moves focus to the next (or previous) pane in tree order.
 func (t *Tree) CycleFocus(forward bool) {
 	ids := t.Panes()
+	if len(ids) == 0 {
+		return
+	}
 	i := slices.Index(ids, t.focus)
 	if forward {
 		i = (i + 1) % len(ids)
@@ -166,6 +176,12 @@ func (t *Tree) Split(target, id PaneID, s Split) error {
 // side. Cells are about twice as tall as wide, so the width is compared with
 // twice the height. Ties prefer the focused pane, then the lowest ID.
 func (t *Tree) AutoPlace(id PaneID) error {
+	if t.root == nil {
+		t.root, t.focus, t.zoomed = &node{pane: id}, id, false
+		t.relayout()
+		return nil
+	}
+
 	var best *node
 	bestArea := -1
 
@@ -191,6 +207,7 @@ func (t *Tree) AutoPlace(id PaneID) error {
 
 // Close removes pane id; its sibling takes over the parent's space. If id had
 // focus, focus moves to the first pane of that sibling. Closing leaves zoom.
+// Closing the last pane empties the tree.
 func (t *Tree) Close(id PaneID) error {
 	n := t.find(id)
 	if n == nil {
@@ -199,7 +216,9 @@ func (t *Tree) Close(id PaneID) error {
 
 	p := n.parent
 	if p == nil {
-		return ErrLastPane
+		t.root, t.focus, t.zoomed = nil, 0, false
+		t.relayout()
+		return nil
 	}
 
 	sibling := p.first
@@ -257,13 +276,17 @@ func (t *Tree) leafNodes() []*node {
 		walk(n.first)
 		walk(n.second)
 	}
-	walk(t.root)
+	if t.root != nil {
+		walk(t.root)
+	}
 	return out
 }
 
 func (t *Tree) relayout() {
 	t.rects = make(map[*node]Rect)
-	t.layoutNode(t.root, t.area)
+	if t.root != nil {
+		t.layoutNode(t.root, t.area)
+	}
 }
 
 func (t *Tree) layoutNode(n *node, r Rect) {

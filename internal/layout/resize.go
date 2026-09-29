@@ -11,6 +11,9 @@ const (
 // is clamped to the minimum pane size.
 func (t *Tree) Resize(d Direction, grow bool) error {
 	child := t.find(t.focus)
+	if child == nil {
+		return ErrUnknownPane
+	}
 	for p := child.parent; p != nil; child, p = p, p.parent {
 		if (d == Left || d == Right) != (p.split == SplitHorizontal) {
 			continue
@@ -56,7 +59,11 @@ func (t *Tree) ResizeAll(grow bool) error {
 
 // Flip toggles the orientation of the focused pane's parent split.
 func (t *Tree) Flip() error {
-	p := t.find(t.focus).parent
+	n := t.find(t.focus)
+	if n == nil {
+		return ErrUnknownPane
+	}
+	p := n.parent
 	if p == nil {
 		return ErrNoParent
 	}
@@ -78,7 +85,7 @@ func (t *Tree) Flip() error {
 }
 
 // ToggleZoom shows the focused pane alone, or returns to the full layout.
-func (t *Tree) ToggleZoom() { t.zoomed = !t.zoomed }
+func (t *Tree) ToggleZoom() { t.zoomed = !t.zoomed && t.root != nil }
 
 // Zoomed reports whether the focused pane is shown alone.
 func (t *Tree) Zoomed() bool { return t.zoomed }

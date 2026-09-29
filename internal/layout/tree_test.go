@@ -86,9 +86,6 @@ func TestClose(t *testing.T) {
 		t.Fatalf("focus = %d, want 2", tr.Focus())
 	}
 
-	if err := tr.Close(2); !errors.Is(err, ErrLastPane) {
-		t.Errorf("last pane: err = %v", err)
-	}
 	if err := tr.Close(7); !errors.Is(err, ErrUnknownPane) {
 		t.Errorf("unknown pane: err = %v", err)
 	}
@@ -119,4 +116,28 @@ func TestAreaChangeScales(t *testing.T) {
 	_ = tr.AutoPlace(2)
 	tr.SetArea(Rect{W: 60, H: 20})
 	assertRects(t, tr, map[PaneID]Rect{1: {0, 0, 30, 20}, 2: {30, 0, 30, 20}})
+}
+
+func TestEmptyTree(t *testing.T) {
+	tr := NewEmpty()
+	tr.SetArea(Rect{W: 80, H: 24})
+	if tr.Focus() != 0 || len(tr.Panes()) != 0 || len(tr.Rects()) != 0 {
+		t.Fatal("empty tree not empty")
+	}
+	tr.CycleFocus(true)
+	tr.MoveFocus(Right)
+	tr.ToggleZoom()
+	if tr.Zoomed() || tr.Resize(Right, true) == nil || tr.Flip() == nil || tr.SwapNext() {
+		t.Fatal("operation on empty tree succeeded")
+	}
+	if _, ok := tr.BorderAt(1, 1); ok {
+		t.Fatal("border in empty tree")
+	}
+
+	if err := tr.AutoPlace(3); err != nil || tr.Focus() != 3 || tr.Rects()[3] != (Rect{W: 80, H: 24}) {
+		t.Fatalf("AutoPlace into empty tree: err=%v focus=%d rects=%v", err, tr.Focus(), tr.Rects())
+	}
+	if err := tr.Close(3); err != nil || tr.Focus() != 0 || len(tr.Panes()) != 0 {
+		t.Fatalf("closing the last pane: err=%v focus=%d", err, tr.Focus())
+	}
 }

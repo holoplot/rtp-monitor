@@ -33,7 +33,7 @@ func (t *Tree) TitleAt(x, y int) (PaneID, bool) {
 // border and the second pane's left or top border. Where boundaries cross,
 // the outer split wins. Nothing is draggable while zoomed.
 func (t *Tree) BorderAt(x, y int) (Border, bool) {
-	if t.zoomed {
+	if t.zoomed || t.root == nil {
 		return Border{}, false
 	}
 	return t.borderAt(t.root, x, y)
