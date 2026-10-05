@@ -9,13 +9,13 @@ require (
 	github.com/charmbracelet/x/ansi v0.11.8
 	github.com/docker/go-units v0.5.0
 	github.com/godbus/dbus/v5 v5.2.2
-	github.com/holoplot/go-avahi v1.0.1
+	github.com/holoplot/go-avahi v1.1.0
 	github.com/holoplot/go-multicast v0.0.0-20260824095630-ca1f86a9666d
 	github.com/holoplot/go-sap v0.0.0-20260323125409-00b3ab9bed3b
 	github.com/holoplot/ravenna-fpga-drivers/go v0.0.0-20260831090228-89cd73216896
 	github.com/holoplot/sdp v0.18.3-0.20220210000336-2bb0da759e83
 	github.com/lucasb-eyer/go-colorful v1.4.1
-	github.com/pion/rtcp v1.2.18
+	github.com/pion/rtcp v1.2.19
 	github.com/pion/rtp/v2 v2.0.0
 	github.com/spf13/cobra v1.10.2
 )
